@@ -1,0 +1,50 @@
+{
+    "version": "2.0.0",
+    "inputs": [
+        // 构建类型选择
+        {
+            "id": "buildType",
+            "type": "pickString",
+            "description": "选择构建类型",
+            "options": [
+                "Debug",
+                "Release"
+            ],
+            "default": "Debug"
+        }
+    ],
+    "tasks": [
+        // 配置任务，生成构建文件
+        {
+            "label": "CMake-MinGW-Config",
+            "type": "shell",
+            "command": "D:/CommonDev/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "-B", "build/${input:buildType}",
+                // 根据实际情况选择生成器，这里以MSYS编译，
+                // 如果使用MinGW则改为"MinGW Makefiles",
+                // 如果使用MSVC则改为"Visual Studio 16 2019","Visual Studio 17 2022"等
+                "-G", "MSYS Makefiles",
+                "-DCMAKE_BUILD_TYPE=${input:buildType}",
+                "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${workspaceFolder}/bin/${input:buildType}",
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${workspaceFolder}/libs/${input:buildType}",
+                "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${workspaceFolder}/libs/${input:buildType}"
+            ],
+            "problemMatcher": ["$gcc"],
+            "group": "build"
+        },
+        // 构建任务，编译生成可执行文件
+        {
+            "label": "CMake-MinGW-build",
+            "type": "shell",
+            "command": "D:/CommonDev/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "--build", "build/${input:buildType}",
+                "-j4"
+            ],
+            "problemMatcher": ["$gcc"],
+            "dependsOn": "CMake-MinGW-Config",
+            "group": { "kind": "build", "isDefault": true }
+        }
+    ]
+}
