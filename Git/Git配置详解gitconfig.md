@@ -341,7 +341,7 @@ ssh -T git@gitlab.com
 ### 1.2  配置不同平台的用户信息（避免提交错用户）
 
 **方法1：使用条件配置（推荐）**
-通过在全局 `~/.gitconfig` 文件中添加**条件配置**，根据仓库路径自动切换用户信息：
+通过在全局 `%USERPROFILE%/.gitconfig`【Linux/Mac为：`~/.gitconfig`】 文件中添加**条件配置**，根据仓库路径自动切换用户信息：
 
 ```ini
 # 全局默认配置
@@ -359,7 +359,7 @@ ssh -T git@gitlab.com
 ```
 
 创建对应平台的配置文件：
-- `~/.gitconfig-github`：
+- `%USERPROFILE%/.gitconfig-github`【Linux/Mac为：`~/.gitconfig-github`】：
   ```ini
   [user]
       name = GitHub 用户名
@@ -410,7 +410,7 @@ git config user.email "gitlab邮箱@example.com"
 **方案 1：直接把 Token 写进仓库地址（最简单、最通用）**
 
 克隆/推送时直接用：
-```
+```bash
 # GitHub 格式
 https://你的GitHub用户名:GitHub令牌@github.com/用户名/仓库名.git
 
