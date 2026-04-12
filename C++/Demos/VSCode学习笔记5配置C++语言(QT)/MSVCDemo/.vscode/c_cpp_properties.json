@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include",
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtCore",
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtGui",
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtWidgets"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "D:\\CommonDev\\msys64\\mingw64\\bin\\gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}

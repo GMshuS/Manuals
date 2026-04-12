@@ -1,0 +1,35 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                /// QT头文件配置，“配置一”跟“配置一”按需使用
+                // 配置一：MinGW头文件
+                // "D:/CommonDev/Qt/6.11.0/mingw_64/include",
+                // "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtCore",
+                // "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtGui",
+                // "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtWidgets",
+                // 配置二：MSVC头文件
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include",
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtCore",
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtGui",
+                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtWidgets"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            // 使用MSVC编译器
+            "compilerPath": "cl.exe",
+            // 使用MinGW编译器
+            // "compilerPath": "D:/Qt/Tools/mingw1120_64/bin/g++.exe",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-msvc-x64"
+            
+        }
+    ],
+    "version": 4
+}

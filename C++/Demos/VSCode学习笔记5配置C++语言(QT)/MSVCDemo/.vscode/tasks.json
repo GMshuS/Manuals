@@ -1,0 +1,66 @@
+{
+    "version": "2.0.0",
+    "inputs": [
+        // 构建类型选择
+        {
+            "id": "buildType",
+            "type": "pickString",
+            "description": "选择构建类型",
+            "options": [
+                "Debug",
+                "Release"
+            ],
+            "default": "Debug"
+        }
+    ],
+    "tasks": [
+        // CMake配置任务
+        {
+            "label": "CMake-MSVC-config",
+            "type": "shell",
+            // 注意：这里的命令路径需要根据你的实际安装位置进行调整
+            "command": "D:/CommonDev/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "-B", "build/${input:buildType}",
+                "-G", "Visual Studio 17 2022",
+                "-A", "x64",
+                "-DCMAKE_BUILD_TYPE=${input:buildType}",
+                // 输出目录配置，确保生成的可执行文件和库文件在指定位置
+                "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${workspaceFolder}/bin",
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${workspaceFolder}/libs",
+                "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${workspaceFolder}/libs",
+                // QT库搜索路径，这一步是关键，确保CMake能找到Qt的MSVC的位置
+                "-DCMAKE_PREFIX_PATH=D:/CommonDev/Qt/6.11.0/msvc2022_64/"
+            ],
+            "problemMatcher": ["$msCompile"],
+            "group": { "kind": "build" }
+        },
+        // CMake构建任务
+        {
+            "label": "CMake-MSVC-build",
+            "type": "shell",
+            // 注意：这里的命令路径需要根据你的实际安装位置进行调整
+            "command": "D:/CommonDev/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "--build", "build/${input:buildType}",
+                "--config", "${input:buildType}",
+                "-j4"
+            ],
+            "problemMatcher": ["$msCompile"],
+            "dependsOn": "CMake-MSVC-config",
+            "group": { "kind": "build", "isDefault": true }
+        },
+        // 部署任务，使用windeployqt工具将Qt依赖项复制到输出目录
+        {
+            "label": "CMake-MSVC-deploy (debug)",
+            "type": "shell",
+            // 注意：这里的命令路径需要根据你的实际安装位置进行调整
+            "command": "D:/CommonDev/Qt/6.11.0/msvc2022_64/bin/windeployqt.exe",
+            "args": [
+                "--debug", "${workspaceFolder}/bin/debug/MSVCDemo.exe"
+            ],
+            "problemMatcher": ["$msCompile"],
+            "group": { "kind": "build"}
+        }
+    ]
+}
