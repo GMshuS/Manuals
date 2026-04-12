@@ -222,6 +222,9 @@ def test_greet():
 
 运行测试：
 ```bash
+# pytest 一般是开发时用的测试工具，不是生产代码依赖，所以用 --dev 安装
+uv add --dev pytest
+
 # 自动激活环境、运行 pytest
 uv run pytest tests/ -v
 ```
@@ -237,6 +240,10 @@ uv run uv-demo-cli
 
 ### 2.7 代码检查（可选）
 ```bash
+# ruff 一般是开发时用的测试工具，不是生产代码依赖，所以用 --dev 安装
+uv add --dev ruff
+
+# 检查代码
 uv run ruff check src/
 ```
 
@@ -283,7 +290,93 @@ uv-demo-cli
 
 ---
 
-## 四、常见问题（FAQ）
+## 四、打包离线包
+**在有网机器上打包 → 拷贝到无网机器 → 直接运行，不需要下载任何包**
+
+**步骤 1：导出所有离线依赖（最关键）**
+- 1. 先导出所有依赖列表
+  ```bash
+  uv export --format requirements.txt --output requirements.txt --no-dev
+  ```
+  会生成 `requirements.txt`，包含**所有精确版本**。
+
+- 2. 创建离线包存放目录
+  ```bash
+  mkdir vendor
+  ```
+
+- 3. 下载所有包的离线安装文件（.whl/.tar.gz）
+  ```bash
+  uv pip download -r requirements.txt -d vendor
+  ```
+
+  ✅ 执行完后：
+  `vendor/` 文件夹里就是**全部离线依赖包**，包括 requests、pandas、pytest 等。
+
+**步骤 2：打包你的项目 + 离线依赖**
+
+最终要交付的目录结构如下：
+```
+your_project_offline/
+├── your_code/        # 你的项目代码
+├── vendor/           # 所有离线依赖包（刚才下载的）
+├── requirements.txt
+└── run.py            # 你的入口文件
+```
+
+把整个文件夹压缩
+```bash
+# Windows 右键压缩
+# Linux/macOS
+zip -r offline.zip your_project_offline/
+```
+
+把 `offline.zip` 拷贝到**无网络机器**。
+
+**步骤 3：无网络机器上安装（完全离线）**
+- 1. 解压文件
+- 2. 创建虚拟环境（不需要联网）
+  ```bash
+  uv venv .venv
+  ```
+
+- 3. **从本地 vendor 目录安装所有依赖（离线安装）**
+  ```bash
+  uv pip install -r requirements.txt --no-index --find-links=vendor
+  ```
+
+> **关键参数解释（必须加）**
+> - `--no-index`：**不去 PyPI 下载**
+> - `--find-links=vendor`：**只从本地 vendor 文件夹找包**
+
+**步骤 4：运行项目（无网络成功运行）**
+
+```bash
+uv run python main.py
+```
+
+或者：
+```bash
+uv run pytest tests/
+```
+
+**超级完整版：连 Python 都打包（目标机器连 Python 都没有）**
+
+如果你要在**完全空白机器**运行：
+
+- 1. 下载嵌入式 Python（官网下载 embeddable 包）
+- 2. 放到文件夹里
+- 3. 用离线 Python + 离线依赖运行
+
+**但 99% 场景不需要这么复杂**，上面的步骤已经满足：
+- 有 Python
+- 无网络
+- 能运行 uv
+- 能离线安装包
+
+---
+
+## 五、常见问题（FAQ）
 - **Q：uv 与 poetry/pip 区别？**
   A：uv 速度更快、单二进制、无 Python 依赖、命令更简洁；完全兼容 `pyproject.toml`。
 - **Q：如何迁移现有项目？**
@@ -292,5 +385,3 @@ uv-demo-cli
   A：项目内 `.venv`，可通过 `UV_PROJECT_ENVIRONMENT` 更改。
 
 ---
-
-要不要我把以上内容整理成一份可直接复制的 **uv 常用命令速查表（Markdown 格式）**，方便你随时查阅？

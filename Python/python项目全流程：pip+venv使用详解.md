@@ -46,6 +46,16 @@ source .venv/bin/activate
 deactivate
 ```
 
+## 4. 重建环境
+
+```bash
+deactivate
+rm -rf .venv  # 或手动删除
+python -m venv .venv
+# 激活后
+pip install -r requirements.txt
+```
+
 ---
 
 # 三、pip 包管理（开发阶段）
@@ -111,6 +121,13 @@ pip uninstall requests
 pip autoremove  # pip 23.1+ 支持
 ```
 
+## 7. 多个 Python 版本冲突
+始终用：
+```bash
+python -m pip install ...
+```
+避免系统 pip 与虚拟环境 pip 混淆。
+
 ---
 
 # 四、完整开发流程示例（实战项目）
@@ -121,7 +138,7 @@ pip autoremove  # pip 23.1+ 支持
 ## 项目结构
 ```
 .venv/
-├── bin/                # 可执行文件目录（Windows 特有的命名，对应 Linux 的 bin/）
+├── Scripts/            # 可执行文件目录（Windows 特有的命名，对应 Linux 的 bin/）
 │   ├── activate        # 激活环境的脚本（Linux 格式，Windows 也兼容）
 │   ├── Activate.ps1    # Windows PowerShell 激活脚本（重点！）
 │   ├── pip.exe         # pip 可执行文件
@@ -362,26 +379,15 @@ dev = [
    ```
 2. 把上面模板粘贴进去，改改名字、版本、依赖即可。
 
-**方法2：使用 `setuptools` 生成**
+**方法2：使用 `poetry` 生成（更现代化工具）**
 
-```bash
-pip install setuptools --upgrade
-```
-
-然后执行：
-
-```bash
-python -m setup.py init
-```
-> 会引导你一步步生成。
-
-**方法3：使用 `poetry` 生成（更现代化工具）**
+> **注意：执行`poetry`之前，需要退出虚拟环境**
 
 ```bash
 pip install poetry
+# 会自动生成完整的 `pyproject.toml`，还自带虚拟环境管理。
 poetry init
 ```
-> 会自动生成完整的 `pyproject.toml`，还自带虚拟环境管理。
 
 ## 3. 构建包
 ```bash
@@ -467,32 +473,35 @@ pip install my_demo
 
 ## 1. 在【能联网的电脑】上操作
 
-**步骤1：创建并激活虚拟环境（必须）**
+**步骤1：创建并激活虚拟环境（非必须，如果还没虚拟环境）**
 ```bash
 python -m venv .venv
 ```
+
+**步骤2：创建并激活虚拟环境（必须）**
 
 Windows 激活：
 ```bash
 .venv\Scripts\activate
 ```
 
-Linux/macOS：
+Linux/macOS 激活：
 ```bash
 source .venv/bin/activate
 ```
 
-**步骤2：安装你项目需要的所有包**
+**步骤3：安装你项目需要的所有包（非必须，如果还没安装包）**
 ```bash
 pip install flask requests pandas numpy  # 你自己的依赖
 ```
 
-**步骤3：导出依赖列表**
+**步骤4：导出依赖列表（必须）**
 ```bash
 pip freeze > requirements.txt
 ```
 
 **步骤4：离线下载所有依赖包（关键步骤）**
+
 新建一个文件夹存放离线包：
 ```bash
 mkdir packages
@@ -590,54 +599,3 @@ dist/main.exe
 直接把这个 exe 拷贝到离线电脑，**双击就能运行**。
 
 ---
-
-# 十、常见 venv + pip 问题速查
-## 1. 换源加速（解决下载慢）
-```bash
-# 临时
-pip install requests -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 永久
-pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-```
-
-## 2. 多个 Python 版本冲突
-始终用：
-```bash
-python -m pip install ...
-```
-避免系统 pip 与虚拟环境 pip 混淆。
-
-## 3. 重建环境
-```bash
-deactivate
-rm -rf .venv  # 或手动删除
-python -m venv .venv
-# 激活后
-pip install -r requirements.txt
-```
-
----
-
-# 十一、全流程命令速览（一页总结）
-```bash
-# 创建
-python -m venv .venv
-
-# 激活
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-
-# 安装
-pip install flask pytest
-pip freeze > requirements.txt
-pip install -r requirements.txt
-
-# 测试
-pytest tests/ -v
-
-# 打包
-pip install build twine
-python -m build
-twine upload dist/*
-```
