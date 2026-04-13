@@ -1,16 +1,29 @@
 ---
-description: Execute a specific subtask by ID
+description: Execute a specific subtask by ID, or check status and sequentially execute plan
 ---
 
 # Bigtask Execute Command
 
 ## Parameter Validation
 
-IF $ARGUMENTS is empty OR $ARGUMENTS does not contain "/":
-OUTPUT "Error: Invalid format. Please provide both project name and task ID."
-OUTPUT "Usage: /bigtask-execute <project-name>/<task-id>"
-OUTPUT "Example: /bigtask-execute project-a/task-1"
+IF $ARGUMENTS is empty:
+OUTPUT "Error: Missing required arguments."
+OUTPUT "Usage: /bigtask-execute <project-name> or /bigtask-execute <project-name>/<task-id>"
+OUTPUT "Examples:"
+OUTPUT "  - /bigtask-execute project-a (check status and sequentially execute)"
+OUTPUT "  - /bigtask-execute project-a/task-1 (execute specific task)"
 STOP
+
+## Check Execution Mode
+
+IF $ARGUMENTS contains "/":
+SET $PROJECT_NAME = part before "/"
+SET $TASK_ID = part after "/"
+SET $MODE = "single"
+ELSE:
+SET $PROJECT_NAME = $ARGUMENTS
+SET $TASK_ID = ""
+SET $MODE = "sequential"
 
 ## Execution
 
@@ -29,14 +42,16 @@ When asking, be specific about what you need clarified and provide options when 
 
 ---
 
-Execute a specific subtask based on the provided task ID and project name.
+## Mode: Single Task Execution
+
+If $MODE is "single", execute a specific subtask based on the provided task ID.
 
 The format is: `/bigtask-execute project-name/task-id` (e.g., `/bigtask-execute project-a/task-1`)
 
-1. First, read the `tasks/$1/task_plan.md` file to understand all tasks (where $1 is the project name)
-2. Find the task with ID: $2 (e.g., "task-1", "task-2")
-3. Check for any input files that this task depends on (from previous task outputs in `tasks/$1/outputs/`)
-4. Execute the task and create output files in `tasks/$1/outputs/`
+1. First, read the `tasks/$PROJECT_NAME/task_plan.md` file to understand all tasks
+2. Find the task with ID: $TASK_ID
+3. Check for any input files that this task depends on (from previous task outputs in `tasks/$PROJECT_NAME/outputs/`)
+4. Execute the task and create output files in `tasks/$PROJECT_NAME/outputs/`
 
 The task plan format is:
 
@@ -46,7 +61,7 @@ The task plan format is:
 - **Input**: what files this task needs as input
 - **Output**: what files this task produces
 
-After execution, create a state file `tasks/$1/$2-state.json` (e.g., `tasks/project-a/task-1-state.json`) with:
+After execution, create a state file `tasks/$PROJECT_NAME/$TASK_ID-state.json` (e.g., `tasks/project-a/task-1-state.json`) with:
 
 - taskId
 - status (completed/failed)
@@ -54,3 +69,53 @@ After execution, create a state file `tasks/$1/$2-state.json` (e.g., `tasks/proj
 - timestamp
 
 Report the execution status and any files created.
+
+---
+
+## Mode: Sequential Execution
+
+If $MODE is "sequential" (no task-id provided), check task status and execute tasks in order.
+
+The format is: `/bigtask-execute project-name` (e.g., `/bigtask-execute project-a`)
+
+1. First, read the `tasks/$PROJECT_NAME/task_plan.md` file to understand all tasks
+2. Read all existing state files (`tasks/$PROJECT_NAME/*-state.json`) to determine completed tasks
+3. Find the next pending task that has all dependencies satisfied
+4. Execute that task and create output files in `tasks/$PROJECT_NAME/outputs/`
+5. Create the state file for the executed task
+6. OUTPUT the current status and ask user whether to continue
+
+### Execution Flow
+
+```
+1. Read task_plan.md → Get all tasks and their dependencies
+2. Read existing *-state.json files → Determine completed tasks
+3. Find next executable task:
+   - Has status "pending" (not in any state file)
+   - All dependencies are completed
+4. Execute the task
+5. Create state file with status "completed" or "failed"
+6. OUTPUT status and ask: "Continue with next task? (Y/N)"
+```
+
+### Status Output Format
+
+After each task execution, OUTPUT:
+
+```
+────────────────────────────────────────
+📊 Task Status: $PROJECT_NAME
+
+Completed: [n] tasks
+Current: [task-id] - [status]
+Pending: [n] tasks remaining
+
+Next Task: [task-id] - [task description]
+────────────────────────────────────────
+
+Continue executing next task? (Y/N)
+```
+
+Wait for user confirmation before executing the next task. DO NOT auto-continue.
+
+Report the execution status after each task.

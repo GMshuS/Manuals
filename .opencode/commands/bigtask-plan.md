@@ -100,3 +100,22 @@ Create a `tasks/$PROJECT_NAME/task_plan.md` file with the following structure:
 The task name (e.g., "project-a", "feature-b") will be used to create an isolated directory. First check the project context to understand what needs to be built.
 
 Output the task plan and explain the reasoning behind each task and its dependencies.
+
+## Wait for User Confirmation
+
+After generating the task plan, OUTPUT a confirmation prompt like:
+
+```
+────────────────────────────────────────
+📋 Task Plan Generated: $PROJECT_NAME
+
+Total Tasks: [number]
+Estimated Parallel Groups: [number]
+
+Please confirm to proceed with execution:
+- Type "/bigtask-execute $PROJECT_NAME/task-1" to start executing
+- Or provide feedback to modify the plan first
+────────────────────────────────────────
+```
+
+DO NOT automatically start executing any tasks. Wait for the user's confirmation command.
