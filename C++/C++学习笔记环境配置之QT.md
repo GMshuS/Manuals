@@ -95,7 +95,7 @@ cmake --version    # 查看CMake版本
 - Qt文档查询：Shift+F1快速查看Qt文档
 - 多套件支持：自动检测MinGW/MSVC套件
 
-## 2.3 插件配置
+## 2.3 插件通用配置
 
 **配置C/C++**  
 
@@ -107,17 +107,17 @@ cmake --version    # 查看CMake版本
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                /// QT头文件配置，“配置一”跟“配置一”按需使用
-                // 配置一：MinGW头文件
-                // "D:/CommonDev/Qt/6.11.0/mingw_64/include",
-                // "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtCore",
-                // "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtGui",
-                // "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtWidgets",
-                // 配置二：MSVC头文件
-                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include",
-                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtCore",
-                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtGui",
-                "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtWidgets"
+                /// QT头文件配置，“配置一”跟“配置二”按需使用
+                // 配置一：MSVC头文件
+                // "D:/CommonDev/Qt/6.11.0/msvc2022_64/include",
+                // "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtCore",
+                // "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtGui",
+                // "D:/CommonDev/Qt/6.11.0/msvc2022_64/include/QtWidgets"
+                // 配置二：MinGW头文件
+                "D:/CommonDev/Qt/6.11.0/mingw_64/include",
+                "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtCore",
+                "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtGui",
+                "D:/CommonDev/Qt/6.11.0/mingw_64/include/QtWidgets",
             ],
             "defines": [
                 "_DEBUG",
@@ -140,6 +140,8 @@ cmake --version    # 查看CMake版本
 
 **配置CMake Tool**
 
+- 基础配置
+
 进入QT UI配置`Cmake Tools -> Settings`
 |配置项|配置值|配置说明|
 |---|---|----|
@@ -147,7 +149,66 @@ cmake --version    # 查看CMake版本
 |Cmake: Build Directory|${workspaceFolder}/build|CMake的默认构建目录|
 |Cmake: Generator|MSYS Makefiles|配置CMake的生成器（可选），还可以是：Visual Studio 17 2022、Unix Makefiles、MinGW Makefiles、Ninja等|
 
+- 套件（kits）配置
 
+配置文件`.vscode/cmake-kits.json`，新增MinGW、MSVC编译器套件的配置，配置好以后可以通过`CMake:select a kit`选择CMake要使用的套件。
+
+```json
+[
+  {
+    "name": "MinGW GCC x64 (Qt5.14.2)",
+    "compilers": {
+      "C": "C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/gcc.exe",
+      "CXX": "C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "environmentVariables": {
+      "PATH": "C:/Qt/Qt5.14.2/Tools/mingw730_64/bin;${env:PATH}"
+    }
+  },
+  {
+    "name": "MinGW GCC x32 (Qt5.14.2)",
+    "compilers": {
+      "C": "C:/Qt/Qt5.14.2/Tools/mingw730_32/bin/gcc.exe",
+      "CXX": "C:/Qt/Qt5.14.2/Tools/mingw730_32/bin/g++.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "environmentVariables": {
+      "PATH": "C:/Qt/Qt5.14.2/Tools/mingw730_32/bin;${env:PATH}"
+    }
+  },
+  {
+    "name": "VS2017 MSVC x64",
+    "compilers": {
+      "C": "cl.exe",
+      "CXX": "cl.exe"
+    },
+    "visualStudio": "Visual Studio 15 2017",
+    "visualStudioArchitecture": "x64",
+    "preferredGenerator": {
+      "name": "Visual Studio 15 2017",
+      "platform": "x64"
+    }
+  },
+  {
+    "name": "VS2017 MSVC x32",
+    "visualStudio": "Visual Studio 15 2017",
+    "visualStudioArchitecture": "Win32",
+    "compilers": {
+      "C": "cl.exe",
+      "CXX": "cl.exe"
+    },
+    "preferredGenerator": {
+      "name": "Visual Studio 15 2017",
+      "platform": "Win32"
+    }
+  }
+]
+```
 
 **配置QT Core**  
 
@@ -164,20 +225,280 @@ cmake --version    # 查看CMake版本
 |---|---|----|
 |Qt-ui: Custom Widgets Designer Exe Path|D:/CommonDev/Qt/6.11.0/msvc2022_64/bin/designer.exe|QT Disigner的路径，这里以msvc编译为例|
 
+## 2.4 配置编译环境
+
+**配置VS编译器**
+
+- **方式一：通过tasks.json执行初始化配置MSVC环境（推荐）**
+
+优点：最干净，最专业的用法
+方法：配置`.vscode/tasks.json`，添加环境变量`options->shell`
+```json
+{
+    "version": "2.0.0",
+    "inputs": [
+        {
+            "id": "buildType",
+            "type": "pickString",
+            "description": "构建类型定义",
+            "options": [
+                "debug",
+                "release"
+            ],
+            "default": "debug"
+        }
+    ],
+    "tasks": [
+        // ====================== 构建任务 ======================
+        // 构建64位程序
+        {
+            "label": "config-qmake-MSVC (x64)",
+            "type": "shell",
+            // 配置MSVC编译环境
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [
+                        "/C",
+                        "\"C:/CommonDev/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars64.bat\"",
+                        "&&"
+                    ]
+                }
+            },
+            "command": "C:/Qt/Qt5.14.2/5.14.2/msvc2017_64/bin/qmake",
+            "args": [
+                "${workspaceFolder}/ProDemo.pro",
+                "-spec", "win32-msvc",
+                "CONFIG+=${input:buildType}",
+                "CONFIG+=qml_${input:buildType}",
+                "DESTDIR=${workspaceFolder}/bin/x64/${input:buildType}",
+                "OBJECTS_DIR=${workspaceFolder}/build/x64/${input:buildType}/obj",
+                "MOC_DIR=${workspaceFolder}/build/x64/${input:buildType}/moc",
+                "RCC_DIR=${workspaceFolder}/build/x64/${input:buildType}/rcc",
+                "UI_DIR=${workspaceFolder}/build/x64/${input:buildType}/ui"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "build-jom-MSVC (x64)",
+            "type": "shell",
+            // 配置MSVC编译环境
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [
+                        "/C",
+                        "\"C:/CommonDev/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars64.bat\"",
+                        "&&"
+                    ]
+                }
+            },
+            "command": "C:/Qt/Qt5.14.2/Tools/QtCreator/bin/jom",
+            "args": ["/J4"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "config-qmake-MSVC (x64)",
+            "problemMatcher": ["$msCompile"]
+        },
+        // 构建32位程序
+        {
+            "label": "config-qmake-MSVC (x32)",
+            "type": "shell",
+            // 配置MSVC编译环境
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [
+                        "/C",
+                        "\"C:/CommonDev/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars32.bat\"",
+                        "&&"
+                    ]
+                }
+            },
+            "command": "C:/Qt/Qt5.14.2/5.14.2/msvc2017/bin/qmake",
+            "args": [
+                "${workspaceFolder}/ProDemo.pro",
+                "-spec", "win32-msvc",
+                "CONFIG+=${input:buildType}",
+                "CONFIG+=qml_${input:buildType}",
+                "DESTDIR=${workspaceFolder}/bin/x32/${input:buildType}",
+                "OBJECTS_DIR=${workspaceFolder}/build/x32/${input:buildType}/obj",
+                "MOC_DIR=${workspaceFolder}/build/x32/${input:buildType}/moc",
+                "RCC_DIR=${workspaceFolder}/build/x32/${input:buildType}/rcc",
+                "UI_DIR=${workspaceFolder}/build/x32/${input:buildType}/ui"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "build-jom-MSVC (x32)",
+            "type": "shell",
+            // 配置MSVC编译环境
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [
+                        "/C",
+                        "\"C:/CommonDev/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars32.bat\"",
+                        "&&"
+                    ]
+                }
+            },
+            "command": "C:/Qt/Qt5.14.2/Tools/QtCreator/bin/jom",
+            "args": ["/J4"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "config-qmake-MSVC (x32)",
+            "problemMatcher": ["$msCompile"]
+        },
+    ]
+}
+```
+
+- **方式二：通过VS开发者命令行启动VSCode**
+
+优点：不需要在tasks.json中添加配置；
+缺点：操作繁琐，并且环境容易被VSCode的插件修改；
+```bash
+# 打开 "x64 Native Tools Command Prompt for VS 2022"【64位编译器】 或者 "x32 Native Tools Command Prompt for VS 2022"【32位编译器】
+# 导航到项目目录
+cd C:\path\to\your\project
+code .
+```
+
+- **方式三：通过CMake Kits配置MSVC环境（CMake构建工程时可用）**
+
+优点：不需要在tasks.json中添加配置；
+缺点：只有CMake编译套件下可用；
+方法：
+```bash
+# 在VSCode中，按“Ctrl+Shift+P”
+# 输入“Select”，选择“CMake:Select a kit”
+# 在弹出的列表中选择你要的VS编译器
+```
+
+**配置MinGW编译器**
+
+- **方式一：通过在tasks.json的临时环境变量配置MinGW编译器（推荐）**
+
+优点：最干净、最专业的做法。
+方法：配置`.vscode/tasks.json`，添加环境变量options->env->Path
+
+```json
+{
+    "version": "2.0.0",
+    "inputs": [
+        {
+            "id": "buildType",
+            "type": "pickString",
+            "description": "选择构建类型",
+            "options": [
+                "Debug",
+                "Release"
+            ],
+            "default": "Debug"
+        }
+    ],
+    "tasks": [
+        {
+            "label": "Config-CMake-MinGW (x64)",
+            "type": "shell",
+            // 添加MinGW编译器环境变量
+            // 注意：必须要在command之前设置环境变量，否则无效
+            "windows": {
+                "options": {
+                    "env": {
+                        "Path": "C:\\Qt\\Qt5.14.2\\Tools\\mingw730_64\\bin;C:\\Qt\\Qt5.14.2\\5.14.2\\mingw73_64\\bin;${env:Path}"
+                    }
+                }
+            },
+            "command": "C:/CommonDev/CMake/bin/cmake",
+            "args": [
+                "-B", "build/x64/${input:buildType}",
+                "-G", "MinGW Makefiles",
+                // 设置编译类型 Debug Or Release
+                "-DCMAKE_BUILD_TYPE=${input:buildType}",
+                // 设置C/C++编译器路径
+                // "-DCMAKE_C_COMPILER=C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/gcc.exe",
+                // "-DCMAKE_CXX_COMPILER=C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/g++.exe",
+                // "-DCMAKE_MAKE_PROGRAM=C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/mingw32-make.exe",
+                // 设置输出路径
+                "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${workspaceFolder}/bin/x64/${input:buildType}",
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${workspaceFolder}/libs/x64/${input:buildType}",
+                "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${workspaceFolder}/libs/x64/${input:buildType}",
+                // 设置依赖库搜索路径
+                "-DCMAKE_PREFIX_PATH=C:/Qt/Qt5.14.2/5.14.2/mingw73_64"
+            ],
+            "problemMatcher": ["$gcc"],
+            "group": "build"
+        },
+        {
+            "label": "Build-CMake-MinGW (x64)",
+            "type": "shell",
+            // 添加MinGW编译器环境变量
+            "windows": {
+                "options": {
+                    "env": {
+                        "Path": "C:\\Qt\\Qt5.14.2\\Tools\\mingw730_64\\bin;C:\\Qt\\Qt5.14.2\\5.14.2\\mingw73_64\\bin;${env:Path}"
+                    }
+                }
+            },
+            "command": "C:/CommonDev/CMake/bin/cmake",
+            "args": [
+                "--build", "build/x64/${input:buildType}",
+                "-j4"
+            ],
+            "dependsOn": "Config-CMake-MinGW (x64)",
+            "problemMatcher": ["$gcc"],
+            "group": { "kind": "build", "isDefault": true }
+        }
+}
+```
+
+- **方式二：通过CMake Kits配置MinGW编译器**
+
+方法：
+```bash
+# 在VSCode中，按“Ctrl+Shift+P”
+# 输入“Select”，选择“CMake:Select a kit”
+# 在弹出的列表中选择你要的MinGW编译器
+```
+> 1. 在CMake Kits配置之前，你所选的MinGW编译器路径已经添加到PATH环境变量中，否则Gcc/G++会找不到运行的依赖库
+> 2. 多个MinGW环境时（比如32位跟64位两个环境），需要设置CMake的CMAKE_C_COMPILER（C编译器）、CMAKE_CXX_COMPILER（C++编译器）、MAKE_MAKE_PROGRAM（make程序）三个编译变量，例如：
+> - -DCMAKE_C_COMPILER=C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/gcc.exe
+> - -DCMAKE_CXX_COMPILER=C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/g++.exe"
+> - -DCMAKE_MAKE_PROGRAM=C:/Qt/Qt5.14.2/Tools/mingw730_64/bin/mingw32-make.exe
+
 ---
 
 # 3. VSCode配置Qt的编译与调试
 
-## 3.1 CMake+MinGW方式编译（Debug+Release）
+## 3.1 CMake+MinGW方式编译
 
 适用场景：轻量级开发，跨平台兼容性好，无需安装Visual Studio。
 
 ### 3.1.1 项目
-[CMakeDemo项目](Demos\CMakeDemo\CMakeLists.txt)
+[CMakeDemo项目](Demos\VSCode学习笔记5配置C++语言(QT)\CMakeDemo\CMakeLists.txt)
+
+### 3.1.2 插件与环境配置
+
+**插件通用配置**
+参考[插件通用配置](#23-插件通用配置)
+
+**插件特殊配置**
+
+无
+
+**编译环境配置**
+
+参考[编译环境配置](#24-编译环境配置)
 
 ### 3.1.3 配置VSCode任务
 
-.vscode/tasks.json：
+配置`.vscode/tasks.json`
 
 ```json
 {
@@ -232,7 +553,7 @@ cmake --version    # 查看CMake版本
 }
 ```
 ### 3.1.4 配置调试
-.vscode/launch.json（GDB调试配置）：
+配置`.vscode/launch.json`（GDB调试配置）：
 
 ```json
 {
@@ -276,7 +597,7 @@ windeployqt.exe --debug D:\Projects\Projects4QT\ProDemo\bin\x64\Debug\ProDemo.ex
 
 ---
 
-## 3.2 CMake+MSVC方式编译（Debug+Release）
+## 3.2 CMake+MSVC方式编译
 
 适用场景：需要与Windows深度集成，或使用MSVC特定功能。
 
@@ -286,47 +607,27 @@ windeployqt.exe --debug D:\Projects\Projects4QT\ProDemo\bin\x64\Debug\ProDemo.ex
 - 安装时勾选 "使用C++的桌面开发"
 - 确保Qt安装了对应版本的MSVC套件（如MSVC2022 64-bit）
 
-### 3.2.2 环境或插件配置
-
-**方式一：通过VS开发者命令行启动VSCode（推荐）**
-
-```bash
-# 打开 "x64 Native Tools Command Prompt for VS 2022"
-# 导航到项目目录
-cd C:\path\to\your\project
-code .
-```
-
-**方式二：配置CMake Kits**
-
-在 `CMakeUserPresets.json` 或 CMake Kits 中添加：
-
-```json
-{
-    "name": "Qt 6.5.3 MSVC2022 64-bit",
-    "visualStudio": "2022",
-    "visualStudioArchitecture": "x64",
-    "compilers": {
-        "C": "cl.exe",
-        "CXX": "cl.exe"
-    },
-    "environmentVariables": {
-        "QTDIR": "C:/Qt/6.5.3/msvc2022_64",
-        "CMAKE_PREFIX_PATH": "C:/Qt/6.5.3/msvc2022_64"
-    },
-    "preferredGenerator": {
-        "name": "Visual Studio 17 2022",
-        "platform": "x64"
-    }
-}
-```
-### 3.2.3 新建项目
+### 3.2.2 新建项目
 
 [MsvcDemo项目](Demos\VSCode学习笔记5配置C++语言(QT)\MsvcDemo\CMakeLists.txt)
 
+### 3.2.2 插件与环境配置
+
+**插件通用配置**
+参考[插件通用配置](#23-插件通用配置)
+
+**插件特殊配置**
+
+无
+
+**编译环境配置**
+
+参考[编译环境配置](#24-编译环境配置)
+
 ### 3.2.4 配置VSCode任务
 
-.vscode/tasks.json（MSVC编译）：
+配置`.vscode/tasks.json`（MSVC编译）：
+
 ```json
 {
     "version": "2.0.0",
@@ -398,7 +699,7 @@ code .
 
 ### 3.2.5 VSCode调试配置
 
-.vscode/launch.json（MSVC调试）：
+配置`.vscode/launch.json`（MSVC调试）：
 
 ```json
 {
@@ -436,16 +737,22 @@ code .
 ### 3.3.1 新建项目
 [ProDemo项目](Demos\VSCode学习笔记5配置C++语言(QT)\ProDemo\CMakeLists.txt)
 
-### 3.3.2 安装jom
+### 3.3.2 插件与环境配置
 
-jom是Qt提供的多核并行构建工具，替代nmake。
+**插件通用配置**
+参考[插件通用配置](#23-插件通用配置)
 
-- 下载地址：https://download.qt.io/official_releases/jom/
-- 解压并将 `jom.exe` 所在目录添加到系统PATH
+**插件特殊配置**
+
+无
+
+**编译环境配置**
+
+参考[编译环境配置](#24-编译环境配置)
 
 ### 3.3.3 配置VSCode任务
 
-.vscode/tasks.json：
+配置`.vscode/tasks.json`
 
 ```json
 {
@@ -472,7 +779,7 @@ jom是Qt提供的多核并行构建工具，替代nmake。
         {
             "label": "jom: Build x64 Debug",
             "type": "shell",
-            "command": "jom",   // 注意：Qt 6.11.0 之后，官方推荐使用 jom 来替代 nmake 进行构建，因为 jom 支持并行编译，可以显著缩短编译时间。jom的路径：D:\CommonDev\Qt\Tools\QtCreator\bin\jom
+            "command": "D:/CommonDev/Qt/Tools/QtCreator/bin/jom.exe",   // 注意：Qt 6.11.0 之后，官方推荐使用 jom 来替代 nmake 进行构建，因为 jom 支持并行编译，可以显著缩短编译时间。
             "args": ["/J4"],
             "group": {
                 "kind": "build",
@@ -503,7 +810,7 @@ jom是Qt提供的多核并行构建工具，替代nmake。
         {
             "label": "jom: Build x64 Release",
             "type": "shell",
-            "command": "jom",   // 注意：Qt 6.11.0 之后，官方推荐使用 jom 来替代 nmake 进行构建，因为 jom 支持并行编译，可以显著缩短编译时间。jom的路径：D:\CommonDev\Qt\Tools\QtCreator\bin\jom
+            "command": "D:/CommonDev/Qt/Tools/QtCreator/bin/jom/jom.exe",   // 注意：Qt 6.11.0 之后，官方推荐使用 jom 来替代 nmake 进行构建，因为 jom 支持并行编译，可以显著缩短编译时间。
             "args": ["/J4"],
             "group": "build",
             "dependsOn": "qmake: x64 Release",
@@ -524,7 +831,7 @@ jom是Qt提供的多核并行构建工具，替代nmake。
 
 ### 3.3.4 调试配置
 
-.vscode/launch.json：
+配置`.vscode/launch.json`（MSVC调试）
 
 ```json
 {
