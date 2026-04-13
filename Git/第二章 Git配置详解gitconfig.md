@@ -265,7 +265,7 @@ Git 配置文件使用 INI 格式，包含节（section）和键值对：
 
 # 六、 配置多个 Git 仓库（如 GitHub 和 GitLab）
 
-## 1. 使用SSH密钥访问仓库
+## 1. 使用SSH密钥访问仓库【推荐】
 
 ### 1.2 配置不同平台的 SSH 密钥（多平台区分）
 
@@ -294,10 +294,10 @@ ssh-keygen -t ed25519 -C "your-email@company.com" -f %USERPROFILE%/.ssh/id_ed255
 ```bash
 # GitHub 
 Host github.com
-  HostName ssh.github.com
+  HostName github.com
   User git
-  # 配置 443 端口绕过防火墙
-  Port 443
+  # 配置 443 端口绕过防火墙【默认端口22报错时，放开此配置】
+  # Port 443
   # 配置绝对路径更安全
   IdentityFile C:\Users\GMshuS\.ssh\id_ed25519_github
   IdentitiesOnly yes
@@ -306,8 +306,8 @@ Host github.com
 Host gitlab.com
   HostName gitlab.com
   User git
-  # 配置 443 端口绕过防火墙
-  Port 443
+  # 配置 443 端口绕过防火墙【默认端口22报错时，放开此配置】
+  # Port 443
   # 配置绝对路径更安全
   IdentityFile C:\Users\GMshuS\.ssh\id_ed25519_gitlab
   IdentitiesOnly yes
@@ -365,7 +365,7 @@ ssh -T git@gitlab.com
       name = GitHub 用户名
       email = github邮箱@example.com
   ```
-- `~/.gitconfig-gitlab`：
+- `%USERPROFILE%/.gitconfig-gitlab`【Linux/Mac为：`~/.gitconfig-gitlab`】：
   ```ini
   [user]
       name = GitLab 用户名
@@ -386,6 +386,13 @@ git config user.name "GitLab 用户名"
 git config user.email "gitlab邮箱@example.com"
 ```
 
+### 1.3 修改远程仓库地址【已经通过非ssh方式clone的仓库】
+
+```bash
+# 假设你的参考地址为:git@github.com:你的用户名/仓库名.git
+git remote set-url origin git@github.com:你的用户名/仓库名.git
+```
+
 ## 2. 使用令牌访问仓库
 
 如果你不想用 SSH，想用 **HTTPS + 令牌（Token）** 同时访问 GitHub 和 GitLab，核心思路是：
@@ -395,7 +402,7 @@ git config user.email "gitlab邮箱@example.com"
 
 下面给你两套最简单、最常用的方案，任选其一即可。
 
-## 2.1 先去两个平台生成令牌
+### 2.1 先去两个平台生成令牌
 **GitHub 生成 Token**
 1. 打开 GitHub → Settings → Developer settings → **Personal access tokens (classic)**
 2. 勾选权限：`repo`（仓库权限）
@@ -406,7 +413,14 @@ git config user.email "gitlab邮箱@example.com"
 2. 勾选权限：`read_repository` + `write_repository`
 3. 生成后**复制保存**
 
-## 2.2 使用令牌
+### 2.2 修改远程仓库地址【已经通过非https方式clone的仓库】
+
+```bash
+# 假设你的参考地址为:https://github.com/你的用户名/仓库名.git
+git remote set-url origin https://github.com/你的用户名/仓库名.git
+```
+
+### 2.3 使用令牌
 **方案 1：直接把 Token 写进仓库地址（最简单、最通用）**
 
 克隆/推送时直接用：
@@ -428,8 +442,8 @@ git clone https://zhangsan:glpat-xxxxxxxxx@gitlab.com/zhangsan/my-project.git
 ```
 
 > ✅ 优点：不用配置，直接用，互不干扰  
-✅ 完美同时支持 GitHub + GitLab  
-✅ 公司电脑、无权限电脑都能用
+> ✅ 完美同时支持 GitHub + GitLab  
+> ✅ 公司电脑、无权限电脑都能用
 
 **方案 2：让 Git 自动记住令牌（推荐，不用每次写长地址）**
 
@@ -450,7 +464,7 @@ git clone https://gitlab.com/xxx/repo.git
 
 Git 会自动记住，以后克隆、拉取、推送**完全不用再输**，且 GitHub / GitLab 令牌**互不干扰**。
 
-### 2.3 查看/删除已保存的凭据（不想用了可以清）
+### 2.4 查看/删除已保存的凭据（不想用了可以清）
 **Windows**
 控制面板 → 凭据管理器 → Windows 凭据  
 找到 `github.com` / `gitlab.com` 编辑/删除
