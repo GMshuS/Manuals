@@ -1,142 +1,246 @@
+# Python 编程语法使用手册
 
-# Python 开发使用手册索引
+> 本系列手册对比 Go 语言，全面介绍 Python 编程语法和最佳实践
 
-本目录包含完整的 Python 开发使用手册系列，参考 Go 语言学习笔记的风格编写，涵盖从环境配置到项目打包发布的全流程。
+## 手册目录
 
----
+### 📚 核心语法
 
-## 手册列表
+| 手册 | 描述 |
+|------|------|
+| [基础语法手册](./python 基础语法手册.md) | 变量、数据类型、运算符、流程控制、字符串操作 |
+| [数据结构手册](./python 数据结构手册.md) | 列表、元组、字典、集合、字节序列 |
+| [函数与模块手册](./python 函数与模块手册.md) | 函数定义、参数传递、作用域、模块系统 |
 
-### 1. [Python 环境配置手册](./python 环境配置手册.md)
+### 🏗️ 高级主题
 
-**内容概要:**
-- Python 安装与配置（Windows/macOS/Linux）
-- pip 镜像源配置
-- 虚拟环境 venv 使用
-- VS Code Python 扩展安装
-- 基础包管理操作
-- uv 现代包管理工具介绍
+| 手册 | 描述 |
+|------|------|
+| [面向对象编程手册](./python 面向对象编程手册.md) | 类与对象、继承、多态、特殊方法、装饰器 |
+| [异常处理手册](./python 异常处理手册.md) | try-except、自定义异常、异常链、最佳实践 |
+| [文件操作手册](./python 文件操作手册.md) | 文件读写、路径操作、序列化、标准 IO |
+| [高级特性手册](./python 高级特性手册.md) | 装饰器、生成器、迭代器、上下文管理器、元类、类型注解 |
+| [并发编程手册](./python 并发编程手册.md) | 多线程、多进程、异步编程、同步原语 |
 
-**适用场景:** 初次配置 Python 开发环境
+### 🔧 其他手册
 
----
-
-### 2. [Python 调试工具使用手册](./python 调试工具使用手册.md)
-
-**内容概要:**
-- 命令行调试器 pdb 使用
-- VS Code 图形化调试配置
-- launch.json 完整配置模板
-- 远程调试配置
-- Web 应用调试（Django/Flask/FastAPI）
-- 高级调试技巧（条件断点、日志断点、异常断点）
-
-**适用场景:** 代码调试、问题排查
+| 手册 | 描述 |
+|------|------|
+| [项目全流程：pip+venv](./python 项目全流程：pip+venv 使用详解.md) | 虚拟环境、包管理 |
+| [项目全流程：uv](./python 项目全流程：uv 使用详解.md) | 现代化 Python 项目管理工具 |
 
 ---
 
-### 3. [Python 包管理工具手册](./python 包管理工具手册.md)
+## 快速索引
 
-**内容概要:**
-- pip 基础与高级用法
-- 镜像源配置
-- 虚拟环境包管理
-- uv 现代包管理工具详解
-- 依赖管理最佳实践
-- 离线包管理方案
-- pip 与 uv 对比
+### 基础概念
 
-**适用场景:** 依赖管理、包安装、环境同步
+- [变量与常量](./python 基础语法手册.md#变量与常量)
+- [基本数据类型](./python 基础语法手册.md#基本数据类型)
+- [类型转换](./python 基础语法手册.md#类型转换)
+- [运算符](./python 基础语法手册.md#运算符)
+- [流程控制](./python 基础语法手册.md#流程控制)
+- [字符串操作](./python 基础语法手册.md#字符串操作)
+
+### 数据结构
+
+- [列表 (List)](./python 数据结构手册.md#列表-list)
+- [元组 (Tuple)](./python 数据结构手册.md#元组-tuple)
+- [字典 (Dictionary)](./python 数据结构手册.md#字典-dictionary)
+- [集合 (Set)](./python 数据结构手册.md#集合-set)
+- [数据结构对比](./python 数据结构手册.md#数据结构对比)
+
+### 函数与模块
+
+- [函数定义](./python 函数与模块手册.md#函数定义)
+- [参数传递](./python 函数与模块手册.md#参数传递)
+- [返回值](./python 函数与模块手册.md#返回值)
+- [作用域](./python 函数与模块手册.md#作用域)
+- [匿名函数](./python 函数与模块手册.md#匿名函数)
+- [模块与包](./python 函数与模块手册.md#模块与包)
+- [常用内置函数](./python 函数与模块手册.md#常用内置函数)
+
+### 面向对象
+
+- [类与对象](./python 面向对象编程手册.md#类与对象)
+- [构造函数](./python 面向对象编程手册.md#构造函数)
+- [实例方法和类方法](./python 面向对象编程手册.md#实例方法和类方法)
+- [属性访问控制](./python 面向对象编程手册.md#属性访问控制)
+- [继承](./python 面向对象编程手册.md#继承)
+- [多态](./python 面向对象编程手册.md#多态)
+- [特殊方法](./python 面向对象编程手册.md#特殊方法)
+- [属性装饰器](./python 面向对象编程手册.md#属性装饰器)
+- [抽象基类](./python 面向对象编程手册.md#抽象基类)
+
+### 异常处理
+
+- [try-except 语句](./python 异常处理手册.md#try-except-语句)
+- [finally 子句](./python 异常处理手册.md#finally 子句)
+- [抛出异常](./python 异常处理手册.md#抛出异常)
+- [自定义异常](./python 异常处理手册.md#自定义异常)
+- [异常链](./python 异常处理手册.md#异常链)
+- [常见内置异常](./python 异常处理手册.md#常见内置异常)
+- [最佳实践](./python 异常处理手册.md#异常处理最佳实践)
+
+### 文件操作
+
+- [文件打开与关闭](./python 文件操作手册.md#文件打开与关闭)
+- [文件读取](./python 文件操作手册.md#文件读取)
+- [文件写入](./python 文件操作手册.md#文件写入)
+- [文件路径操作](./python 文件操作手册.md#文件路径操作)
+- [文件和目录管理](./python 文件操作手册.md#文件和目录管理)
+- [序列化](./python 文件操作手册.md#序列化)
+- [文本与二进制文件](./python 文件操作手册.md#文本与二进制文件)
+
+### 高级特性
+
+- [装饰器](./python 高级特性手册.md#装饰器)
+- [生成器](./python 高级特性手册.md#生成器)
+- [迭代器](./python 高级特性手册.md#迭代器)
+- [上下文管理器](./python 高级特性手册.md#上下文管理器)
+- [描述符](./python 高级特性手册.md#描述符)
+- [元类](./python 高级特性手册.md#元类)
+- [类型注解](./python 高级特性手册.md#类型注解)
+
+### 并发编程
+
+- [线程基础](./python 并发编程手册.md#线程基础)
+- [线程同步](./python 并发编程手册.md#线程同步)
+- [多进程](./python 并发编程手册.md#多进程)
+- [异步编程](./python 并发编程手册.md#异步编程)
+- [并发最佳实践](./python 并发编程手册.md#并发最佳实践)
 
 ---
 
-### 4. [Python 项目打包发布手册](./python 项目打包发布手册.md)
+## Python vs Go 快速对照
 
-**内容概要:**
-- 项目结构准备
-- pyproject.toml 配置详解
-- 构建打包流程
-- 本地测试验证
-- PyPI 发布流程
-- 私有仓库部署
-- PyInstaller 打包成 exe
+### 语法差异
 
-**适用场景:** 项目打包、发布到 PyPI、分发应用
+| 特性 | Python | Go |
+|------|--------|-----|
+| 变量声明 | `x = 1` | `x := 1` |
+| 类型系统 | 动态类型 | 静态类型 |
+| 代码块 | 缩进 | 花括号 `{}` |
+| 布尔值 | `True`, `False` | `true`, `false` |
+| 空值 | `None` | `nil` |
+| 逻辑运算符 | `and`, `or`, `not` | `&&`, `||`, `!` |
 
----
+### 数据结构对照
 
-### 5. [Python 常见问题排查手册](./python 常见问题排查手册.md)
+| Python | Go |
+|--------|-----|
+| list | slice |
+| tuple | struct/array |
+| dict | map |
+| set | map[T]bool |
+| str | string |
 
-**内容概要:**
-- 环境配置问题
-- 虚拟环境问题
-- 包管理问题
-- VS Code 配置问题
-- 调试问题
-- 打包发布问题
-- 代码执行问题
-- 网络与代理问题
+### 并发模型对照
 
-**适用场景:** 遇到错误时快速查找解决方案
-
----
-
-## 快速导航
-
-| 需求 | 推荐手册 |
-|------|----------|
-| 第一次配置 Python 环境 | [环境配置手册](./python 环境配置手册.md) |
-| 代码需要调试 | [调试工具手册](./python 调试工具使用手册.md) |
-| 安装包/管理依赖 | [包管理工具手册](./python 包管理工具手册.md) |
-| 发布自己的包 | [打包发布手册](./python 项目打包发布手册.md) |
-| 遇到错误报错 | [常见问题排查手册](./python 常见问题排查手册.md) |
+| Python | Go |
+|--------|-----|
+| threading.Thread | goroutine |
+| threading.Lock | sync.Mutex |
+| queue.Queue | chan T |
+| asyncio | goroutine + channel |
 
 ---
 
 ## 学习路径建议
 
-### 初学者路径
-1. [环境配置手册](./python 环境配置手册.md) - 搭建开发环境
-2. [包管理工具手册](./python 包管理工具手册.md) - 学习安装依赖
-3. [调试工具手册](./python 调试工具使用手册.md) - 掌握调试技能
-4. [常见问题排查手册](./python 常见问题排查手册.md) - 随时查阅问题
+### 初学者
 
-### 进阶路径
-1. [包管理工具手册](./python 包管理工具手册.md) - 深入依赖管理
-2. [打包发布手册](./python 项目打包发布手册.md) - 发布自己的包
-3. [调试工具手册](./python 调试工具使用手册.md) - 高级调试技巧
+1. 📖 [基础语法手册](./python 基础语法手册.md) - 掌握 Python 基本语法
+2. 📦 [数据结构手册](./python 数据结构手册.md) - 理解内置数据结构
+3. 🔧 [函数与模块手册](./python 函数与模块手册.md) - 学习函数定义和模块使用
+4. 📝 [文件操作手册](./python 文件操作手册.md) - 掌握文件读写
+5. ⚠️ [异常处理手册](./python 异常处理手册.md) - 学会错误处理
 
----
+### 进阶开发者
 
-## 文档风格说明
+1. 🏗️ [面向对象编程手册](./python 面向对象编程手册.md) - 深入理解 OOP
+2. 🚀 [高级特性手册](./python 高级特性手册.md) - 掌握装饰器、生成器等
+3. 🔀 [并发编程手册](./python 并发编程手册.md) - 学习并发编程
 
-本系列手册参考 [Go 语言学习笔记之环境配置.md](../Go/Go 语言学习笔记之环境配置.md) 的风格编写，特点包括：
+### 项目实战
 
-- **结构清晰**: 每章有明确的目标和步骤
-- **命令完整**: 所有命令可直接复制执行
-- **多平台支持**: Windows/macOS/Linux 命令分别标注
-- **表格辅助**: 使用表格对比选项和快捷键
-- **问题排查**: 每章包含常见问题及解决方案
+1. 📦 [pip+venv 使用详解](./python 项目全流程：pip+venv 使用详解.md)
+2. ⚡ [uv 使用详解](./python 项目全流程：uv 使用详解.md)
 
 ---
 
-## 版本信息
+## 代码示例索引
 
-| 文档 | 版本 | 最后更新 |
-|------|------|----------|
-| Python 环境配置手册 | 1.0 | 2024 年 |
-| Python 调试工具使用手册 | 1.0 | 2024 年 |
-| Python 包管理工具手册 | 1.0 | 2024 年 |
-| Python 项目打包发布手册 | 1.0 | 2024 年 |
-| Python 常见问题排查手册 | 1.0 | 2024 年 |
+### 常用代码片段
+
+#### 列表推导式
+```python
+squares = [x**2 for x in range(10)]
+evens = [x for x in range(20) if x % 2 == 0]
+```
+
+#### 字典推导式
+```python
+squares = {x: x**2 for x in range(5)}
+swapped = {v: k for k, v in original.items()}
+```
+
+#### 装饰器
+```python
+from functools import wraps
+
+def my_decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+```
+
+#### 上下文管理器
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def managed_resource():
+    resource = acquire()
+    try:
+        yield resource
+    finally:
+        release(resource)
+```
+
+#### 异步函数
+```python
+import asyncio
+
+async def fetch_data(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.text()
+```
 
 ---
 
-## 反馈与贡献
+## 附录
 
-如有问题或建议，欢迎反馈。
+### Python 版本兼容性
 
----
+本手册主要基于 Python 3.8+ 编写，部分特性需要更新版本：
 
-*文档索引版本：1.0*
-*最后更新：2024 年*
+- `walrus` 运算符 (`:=`)：Python 3.8+
+- `match-case` 语句：Python 3.10+
+- 联合类型语法 (`int | str`)：Python 3.10+
+
+### 参考资源
+
+- [Python 官方文档](https://docs.python.org/3/)
+- [PEP 索引](https://peps.python.org/)
+- [Python Cookbook](https://pypi.org/project/python-cookbook/)
+- [Real Python](https://realpython.com/)
+
+### 版本信息
+
+- 手册版本：1.0
+- 最后更新：2024
+- Python 目标版本：3.8+
+- Go 对比版本：1.18+
