@@ -24,39 +24,57 @@ SET $THEME = $ARGUMENTS after first space
 
 ## Execution
 
-## Brainstorming Guidelines
+## Interactive Brainstorming Guidelines
 
-When doing brainstorming exploration, follow these principles:
+During brainstorming, you MUST continuously engage with the user. DO NOT proceed without confirmation.
 
-1. **Requirement Exploration**: Clarify and elaborate the user's needs
-   - Ask "what" questions to understand goals
-   - Identify key features and functionalities
-   - Consider user scenarios and use cases
+### Required Interaction Pattern
 
-2. **Solution Ideation**: Generate multiple approaches
-   - Consider different architectural patterns
-   - Explore various implementation strategies
-   - No idea is too wild at this stage
+1. **Start with Questions**: Begin by asking the user clarifying questions about their needs
+2. **Propose and Confirm**: For each major decision point, propose options and wait for confirmation
+3. **Discuss Before Concluding**: When you identify issues or risks, discuss them with the user before moving on
 
-3. **Technology Evaluation**: Assess tech options
-   - Trade-offs between different tools/frameworks
-   - Consider team skills and learning curve
-   - Long-term maintenance implications
+### Decision Points That Require User Confirmation
 
-4. **Risk Identification**: Surface potential challenges
-   - Technical risks and mitigation strategies
-   - Unknown unknowns to be explored later
-   - Questions that need further investigation
+- **Scope Definition**: What features are in/out of scope?
+- **Technology Preferences**: Any specific tech stack requirements?
+- **Architecture Choice**: Monolithic vs microservices, SPA vs MPA, etc.
+- **Priority**: What's most important - speed, maintainability, scalability?
+- **Constraints**: Budget, timeline, team skills, existing systems?
 
-## Example Brainstorm Areas
+### What to Do When Issues Arise
 
-- **Scope**: What should be included? What should be excluded?
-- **Architecture**: Monolithic vs microservices, SPA vs MPA, etc.
-- **Data**: Database choices, data modeling, caching strategies
-- **APIs**: REST vs GraphQL, versioning, authentication
-- **Frontend**: Framework choices, UI component strategies
-- **DevOps**: Deployment, CI/CD, monitoring
-- **Security**: Authentication, authorization, data protection
+When you encounter unclear requirements, conflicting constraints, or potential risks:
+
+1. STOP and describe the issue clearly
+2. Present options or questions
+3. WAIT for user response
+4. ONLY proceed after confirmation
+
+### NEVER Do These
+
+- DO NOT assume user preferences without asking
+- DO NOT make technology choices without discussing trade-offs
+- DO NOT proceed with unclear requirements
+- DO NOT skip over potential risks without flagging them
+- DO NOT finish without confirming key decisions
+
+### Example Interaction Flow
+
+```
+You: "Before we continue, I have a few questions:
+1. What is your target audience - consumers or enterprises?
+2. Do you have an existing database, or should we design from scratch?
+3. What is your timeline - days, weeks, or months?"
+
+[Wait for user response]
+
+You: "Based on what you mentioned, here are my initial thoughts on [X]. Does this align with your expectations?"
+
+[Wait for user response]
+
+...continue iterating until all key decisions are confirmed...
+```
 
 ---
 
@@ -135,3 +153,28 @@ Use this brainstorming output as input context for the task planning phase.
 ```
 
 Output the brainstorming notes and explain the reasoning behind each exploration area.
+
+## Final Confirmation
+
+Before completing brainstorming, CONFIRM the following with the user:
+
+1. **Scope**: Is the defined scope correct?
+2. **Technology**: Are the recommended technology choices acceptable?
+3. **Risks**: Are you aware of and accept the identified risks?
+4. **Next Steps**: Do you want to proceed to `/bigtask-plan`?
+
+ONLY after user confirmation, output the completion message with next steps instruction:
+
+```
+────────────────────────────────────────
+🧠 Brainstorming Completed: $PROJECT_NAME
+
+The brainstorming notes have been saved to:
+tasks/$PROJECT_NAME/brainstorm.md
+
+To proceed, use:
+/bigtask-plan $PROJECT_NAME [your refined requirements]
+────────────────────────────────────────
+```
+
+DO NOT automatically proceed to task planning.

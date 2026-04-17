@@ -68,6 +68,10 @@ After execution, create a state file `tasks/$PROJECT_NAME/$TASK_ID-state.json` (
 - outputFiles (array of files created)
 - timestamp
 
+### MANDATORY: State File Required
+
+DO NOT report execution complete until state file is created. The state file is the proof of execution.
+
 Report the execution status and any files created.
 
 ---
@@ -94,9 +98,36 @@ The format is: `/bigtask-execute project-name` (e.g., `/bigtask-execute project-
    - Has status "pending" (not in any state file)
    - All dependencies are completed
 4. Execute the task
-5. Create state file with status "completed" or "failed"
+5. CREATE OR UPDATE state file with status "completed" or "failed"
 6. OUTPUT status and ask: "Continue with next task? (Y/N)"
 ```
+
+### MANDATORY: State File Update
+
+For EACH task execution, you MUST create/update the state file immediately:
+
+**File Path**: `tasks/$PROJECT_NAME/<task-id>-state.json`
+
+**Format**:
+```json
+{
+  "taskId": "task-1",
+  "status": "completed",
+  "outputFiles": [
+    "tasks/$PROJECT_NAME/outputs/filename.ext"
+  ],
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+**Rules**:
+- Create new state file if it doesn't exist
+- Update existing state file with new status
+- ALWAYS set status to "completed" or "failed" (never "pending")
+- ALWAYS include outputFiles array (can be empty if no files)
+- ALWAYS include timestamp in ISO 8601 format
+
+DO NOT proceed to next task until state file is created/updated.
 
 ### Status Output Format
 

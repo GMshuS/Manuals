@@ -103,7 +103,7 @@ Output the task plan and explain the reasoning behind each task and its dependen
 
 ## Wait for User Confirmation
 
-After generating the task plan, OUTPUT a confirmation prompt like:
+After generating the task plan, OUTPUT a clear instruction like:
 
 ```
 ────────────────────────────────────────
@@ -112,10 +112,17 @@ After generating the task plan, OUTPUT a confirmation prompt like:
 Total Tasks: [number]
 Estimated Parallel Groups: [number]
 
-Please confirm to proceed with execution:
-- Type "/bigtask-execute $PROJECT_NAME/task-1" to start executing
-- Or provide feedback to modify the plan first
+To execute the plan, choose one:
+
+1. Sequential execution (one task at a time):
+   /bigtask-execute $PROJECT_NAME
+
+2. Execute specific task:
+   /bigtask-execute $PROJECT_NAME/task-1
+
+3. Modify the plan:
+   [Provide your feedback]
 ────────────────────────────────────────
 ```
 
-DO NOT automatically start executing any tasks. Wait for the user's confirmation command.
+DO NOT automatically execute any tasks. Only output instructions, do not wait for response.
