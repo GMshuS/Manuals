@@ -1,6 +1,14 @@
-我给你整理一套**国内最实用、亲测有效的 GitHub 加速方案**，从简单到进阶都列出来，你按需选就行。
+# 一、使用加速器【最简单，此方法不行再往后看】
 
-# 一、通过URL嵌套设置代理【最简单，但只能pull/clone，不能push】
+## 1. watt toolkit
+
+下载地址：https://steampp.net/
+
+## 2. Cloudflare WARP
+
+下载地址：https://cloudflare-docs.justalittlebyte.ovh/cloudflare-one/connections/connect-devices/warp/download-warp/
+
+# 二、通过URL嵌套设置代理【只能pull/clone，不能push】
 ## 1. 全局配置
 
 **1. 用 `ghproxy.net`（目前很稳）**
@@ -56,7 +64,7 @@ git clone https://ghproxy.net/https://github.com/xxx/xxx.git
 
 > 优点：不污染全局 Git，想用就用。
 
-# 二、使用 Git 内置 HTTP/HTTPS 代理（走你自己的梯子）
+# 三、使用 Git 内置 HTTP/HTTPS 代理（走你自己的梯子）
 
 如果你有自己的科学上网工具，可以让 Git 直接走代理：
 
@@ -81,7 +89,7 @@ git config --global --unset https.proxy
 
 ```
 
-# 三、修改 HOSTS（最硬核、速度最快）
+# 四、修改 HOSTS（最硬核、速度最快）
 直接让电脑把 GitHub 解析到国内能高速访问的 IP，**不用任何代理**。
 
 步骤：
@@ -115,12 +123,12 @@ git config --global --unset https.proxy
 > 优点：**全局加速，包括浏览器、Git、下载**，体验最好。
 > 缺点：IP 会变，偶尔要更新。
 
-# 四、下载 ZIP 时加速（不用 Git）
+# 五、下载 ZIP 时加速（不用 Git）
 很多时候你只是想下代码，不用 Git：
 - 打开：https://download.fastgit.org/
 - 粘贴 GitHub 下载链接，直接高速下载。
 
-# 五、使用镜像站（完全不用访问 GitHub）
+# 六、使用镜像站（完全不用访问 GitHub）
 - https://hub.fastgit.xyz/
 - https://github.moeyy.xyz/
 - https://gitee.com/mirrors

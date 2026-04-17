@@ -393,6 +393,16 @@ git config user.email "gitlab邮箱@example.com"
 git remote set-url origin git@github.com:你的用户名/仓库名.git
 ```
 
+### 1.4 禁用SSH认证【SSH不可用时，需要禁用，才可使用其它认证方式】
+
+```bash
+# 单个仓库禁用
+git config --local http.sslVerify false
+
+# 全局禁用
+git config --global http.sslVerify false
+```
+
 ## 2. 使用令牌访问仓库
 
 如果你不想用 SSH，想用 **HTTPS + 令牌（Token）** 同时访问 GitHub 和 GitLab，核心思路是：

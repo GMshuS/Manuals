@@ -47,6 +47,7 @@ source ~/.bashrc
 2. 添加系统变量：
    - `GOROOT`: `C:\Program Files\Go`（Go 安装目录）
    - `GOBIN`: `$GOROOT/bin`（可执行文件安装目录）
+   - `CGO_ENABLED`：1 或者 0（1-启用，0-禁用，如果Go的项目有使用CGO，必须要设置为1，否则编译不了）
 3. 编辑 `Path` 变量，添加：
    - `%GOROOT%\bin`
 
@@ -99,12 +100,74 @@ go env -w GO111MODULE=on
 4. 找到由 **Go Team at Google** 开发的官方扩展（通常第一个结果）
 5. 点击 **安装**
 
-### 2.2 扩展安装位置
+#### 2.1.1 扩展安装位置
 
 | 位置类型 | 路径（Windows） | 路径（macOS） | 路径（Linux） | 说明 |
 |---------|----------------|---------------|---------------|------|
 | **用户插件**（全局） | `%USERPROFILE%\.vscode\extensions` | `~/.vscode/extensions` | `~/.vscode/extensions` | 默认安装位置，所有项目可用 |
 | **工作区插件**（项目级） | `.vscode/extensions`（项目目录内） | 同上 | 同上 | 仅当前工作区可用 |
+
+#### 2.1.2 核心环境配置
+
+| 配置项 | 说明 | 推荐值 |
+|-------|------|-------|
+| `go.goroot` | 指定Go安装路径（多版本时必备） | `C:/Go` 或 `D:/Programs/Go` |
+| `go.gopath` | GOPATH路径（模块模式下可留空） | `C:/Users/用户名/go` |
+| `go.inferGopath` | 从工作区推断GOPATH（模块模式下忽略） | `false` |
+| `go.useGoProxyToCheckForToolUpdates` | 使用代理检查工具更新 | `true` |
+| `go.environment` | 自定义环境变量 | `{"GOPROXY": "https://goproxy.cn,direct"}` |
+
+示例配置：
+```json
+{
+  "go.goroot": "C:/CommonDev/GoTools/go1.20.4",
+  "go.environment": {
+    "GOPROXY": "https://goproxy.cn,direct",
+    "GO111MODULE": "on"
+  }
+}
+```
+
+#### 2.1.3 代码格式化配置
+
+```json
+{
+  "[go]": {
+    "editor.formatOnSave": true,        // 保存时自动格式化
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true    // 保存时自动整理导入
+    }
+  },
+  "go.formatTool": "goimports",         // 格式化工具（推荐goimports）
+  "go.formatToolArgs": ["-local", "your.company.com"],  // 自定义格式化参数
+  "go.useLanguageServer": true          // 启用gopls语言服务器
+}
+```
+
+**进阶格式化**：使用gofumpt（更严格的格式化）
+```bash
+go install mvdan.cc/gofumpt@latest
+```
+然后设置 `"go.formatTool": "gofumpt"`
+
+#### 2.1.4 代码检查与提示配置
+
+```json
+{
+  "go.lintOnSave": "package",           // 保存时执行代码检查
+  "go.lintTool": "staticcheck",         // 推荐使用staticcheck
+  "go.lintFlags": ["-checks=all"],
+  "go.inlayHints": {                    // 启用内嵌提示
+    "assignVariableTypes": true,
+    "compositeLiteralFields": true,
+    "compositeLiteralTypes": true,
+    "constantValues": true,
+    "functionTypeParameters": true,
+    "parameterNames": true,
+    "rangeVariableTypes": true
+  }
+}
+```
 
 ### 2.2 安装 Go 工具
 
