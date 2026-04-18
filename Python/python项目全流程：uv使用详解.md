@@ -26,6 +26,19 @@ uv --version
 ```
 
 ### 1.2 核心命令分类详解
+#### 0） 安装加速（解决国内下载慢）
+**临时换源（单次生效）**
+
+```bash
+pip install 项目名称==0.1.0 -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn
+```
+
+**永久换源（一劳永逸）**
+在激活的虚拟环境中执行：
+```bash
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn
+```
+
 #### 1）Python 版本管理（替代 pyenv）
 ```bash
 # 列出所有可安装版本
