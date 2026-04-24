@@ -50,13 +50,13 @@ curl -fsSL https://opencode.ai/install | bash
 
 ```bash
 # npm
-npm install -g opencode-ai
+npm install -g opencode-ai@latest
 # bun
-bun install -g opencode-ai
+bun install -g opencode-ai@latest
 # pnpm
-pnpm install -g opencode-ai
+pnpm install -g opencode-ai@latest
 # yarn
-yarn global add opencode-ai
+yarn global add opencode-ai@latest
 ```
 
 ## 2.2 分系统安装方式
