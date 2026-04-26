@@ -12,10 +12,9 @@
 4. [完整插件实例](#四完整插件实例)
 5. [查看已安装插件](#五查看已安装插件)
 6. [卸载插件](#六卸载插件)
-7. [高级配置技巧](#七高级配置技巧)
-8. [社区插件推荐](#八社区插件推荐)
-9. [调试与日志](#九调试与日志)
-10. [资源汇总](#十资源汇总)
+7. [社区插件推荐](#八社区插件推荐)
+8. [调试与日志](#九调试与日志)
+9. [资源汇总](#十资源汇总)
 
 ---
 
@@ -467,12 +466,12 @@ export const CodeReviewPlugin: Plugin = async (ctx) => {
     // ==================== 7. 会话压缩 Hook（实验性）====================
     'experimental.session.compacting': async (input, output) => {
       output.context.push(`
-## 代码审查上下文
-- 当前项目：${ctx.project.id}
-- 工作分支：${ctx.worktree}
-- 审查规则：关注安全性、性能、可维护性
-- 已审查文件：记录在当前会话中
-`)
+      ## 代码审查上下文
+      - 当前项目：${ctx.project.id}
+      - 工作分支：${ctx.worktree}
+      - 审查规则：关注安全性、性能、可维护性
+      - 已审查文件：记录在当前会话中
+      `)
     },
   }
 }
@@ -864,54 +863,11 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 | 本地插件删除后报错 | 其他配置引用该插件 | 检查 `plugin` 数组中是否有 `file://` 路径指向已删除文件 |
 | 全局与项目插件冲突 | 同名插件在不同层级 | 同时检查 `~/.config/opencode/` 和 `./opencode.json` |
 
----
-
-## 七、高级配置技巧
-
-### 7.1 变量替换
-
-支持在配置中使用环境变量和文件内容：
-
-```json
-{
-  "model": "{env:OPENCODE_MODEL}",
-  "provider": {
-    "anthropic": {
-      "options": {
-        "apiKey": "{env:ANTHROPIC_API_KEY}"
-      }
-    }
-  },
-  "instructions": ["{file:./custom-instructions.md}"]
-}
-```
-
-### 7.2 插件专属配置
-
-部分插件支持在 `plugin.json` 中进行专属配置（项目级或全局）：
-
-```json
-// .opencode/plugin.json 或 ~/.config/opencode/plugin.json
-{
-  "@pantheon-ai/opencode-warcraft-notifications": {
-    "faction": "alliance",
-    "showDescriptionInToast": false
-  }
-}
-```
-
-### 7.3 性能优化建议
-
-- **固定版本号**：使用 `opencode-toolbox@1.2.3` 而非 `opencode-toolbox`，避免每次启动解析 "latest" 的延迟
-- **本地插件使用外部包**：需在配置目录创建 `package.json` 声明依赖，OpenCode 启动时会自动 `bun install`
-
----
-
-## 八、社区插件推荐
+## 七、社区插件推荐
 
 以下是 OpenCode 生态中值得推荐的插件，按使用场景分类整理。
 
-### 8.1 认证与模型接入（省钱必备）
+### 7.1 认证与模型接入（省钱必备）
 
 | 插件 | 功能 | 安装 |
 |------|------|------|
@@ -923,7 +879,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 **推荐理由**：OpenCode 本身免费，但 API 调用需付费。这些插件让你用现有订阅计划（ChatGPT Plus、Gemini、千问等）零额外成本使用高端模型。
 
-### 8.2 效率与生产力（核心推荐）
+### 7.2 效率与生产力（核心推荐）
 
 | 插件 | 功能 | 场景 |
 |------|------|------|
@@ -936,7 +892,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 `oh-my-opencode` 是社区公认的"瑞士军刀"，包含背景 Agent、代码分析工具、Claude Code 兼容层，几乎是进阶用户的标配。
 
-### 8.3 通知与交互体验
+### 7.3 通知与交互体验
 
 | 插件 | 功能 | 平台 |
 |------|------|------|
@@ -948,7 +904,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 **推荐组合**：`opencode-notify` + `opencode-ntfy.sh`，本地开发时桌面通知，离开工位时手机推送。
 
-### 8.4 安全与隐私
+### 7.4 安全与隐私
 
 | 插件 | 功能 |
 |------|------|
@@ -958,7 +914,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 **生产环境必装**：`envsitter-guard` 和 `opencode-vibeguard` 可防止 API Key、密码等敏感信息泄露到第三方 LLM。
 
-### 8.5 开发环境与隔离
+### 7.5 开发环境与隔离
 
 | 插件 | 功能 |
 |------|------|
@@ -969,7 +925,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 **团队协作推荐**：`opencode-daytona` 或 `opencode-devcontainers` 确保每个分支/任务在独立环境中运行，避免依赖冲突。
 
-### 8.6 工作流与自动化
+### 7.6 工作流与自动化
 
 | 插件 | 功能 |
 |------|------|
@@ -982,7 +938,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 **大型项目推荐**：`opencode-conductor` 或 `micode` 强制规范 AI 的开发流程，避免"想到哪写到哪"的混乱。
 
-### 8.7 监控与可观测性
+### 7.7 监控与可观测性
 
 | 插件 | 功能 |
 |------|------|
@@ -995,7 +951,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 **企业级推荐**：`opencode-plugin-otel` 可将 OpenCode 的指标、日志、追踪导出到现有可观测平台，与 Claude Code 的监控信号对齐。
 
-### 8.8 搜索与网络
+### 7.8 搜索与网络
 
 | 插件 | 功能 |
 |------|------|
@@ -1006,7 +962,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 **研究型任务推荐**：`opencode-websearch-cited` + `opencode-firecrawl` 组合，实现带引用的深度网络调研。
 
-### 8.9 实用小工具
+### 7.9 实用小工具
 
 | 插件 | 功能 |
 |------|------|
@@ -1019,7 +975,7 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 | `optimal-model-temps` | 自动为特定模型设置最优采样温度 |
 | `unmoji` | 去除 Agent 输出中的所有 emoji |
 
-### 8.10 快速上手指南
+### 7.10 快速上手指南
 
 **基础配置（推荐新手）**：
 
@@ -1067,9 +1023,9 @@ opencode-uninstall opencode-notify  # 卸载指定插件
 
 ---
 
-## 九、调试与日志
+## 八、调试与日志
 
-### 9.1 结构化日志
+### 8.1 结构化日志
 
 使用结构化日志而非 `console.log`：
 
@@ -1086,7 +1042,7 @@ export const MyPlugin: Plugin = async ({ client }) => {
 }
 ```
 
-### 9.2 日志级别说明
+### 8.2 日志级别说明
 
 | 级别 | 用途 |
 |------|------|
@@ -1095,7 +1051,7 @@ export const MyPlugin: Plugin = async ({ client }) => {
 | `warn` | 警告信息，如配置异常、降级处理 |
 | `error` | 错误信息，需要立即关注 |
 
-### 9.3 排查插件加载问题
+### 8.3 排查插件加载问题
 
 1. 启用详细日志：`DEBUG=opencode:plugin opencode`
 2. 检查启动输出中的插件初始化日志
@@ -1104,7 +1060,7 @@ export const MyPlugin: Plugin = async ({ client }) => {
 
 ---
 
-## 十、资源汇总
+## 九、资源汇总
 
 | 资源 | 链接 |
 |------|------|
