@@ -1,22 +1,27 @@
-# OpenCode TUI、LLM等基础配置使用手册
+# OpenCode TUI、LLM 等基础配置使用手册
 
 ## 一、配置作用域（优先级：低 → 高）
+
 ### 1. 远程配置（Remote）
+
 - **作用**：组织/团队统一默认配置（如内部模型、MCP 服务、权限策略）
 - **加载时机**：登录支持的提供商时自动拉取
 - **优先级**：最低（基础层），可被全局/项目覆盖
 
 ### 2. 全局配置（Global）
+
 - **作用**：用户级偏好（主题、默认模型、API Key、快捷键）
 - **生效范围**：当前用户所有项目
 - **优先级**：覆盖远程，被项目覆盖
 
 ### 3. 项目配置（Project）
+
 - **作用**：项目专属设置（模型、权限、插件、技能、命令）
 - **生效范围**：仅当前项目
 - **优先级**：最高（标准文件）
 
 ### 4. 扩展作用域
+
 - **自定义配置**：`OPENCODE_CONFIG` 环境变量指定路径
 - **内联配置**：`OPENCODE_CONFIG_CONTENT` 环境变量（JSON 字符串）
 - **目录配置**：`.opencode/` 子目录（agents/commands/skills/plugins 等）
@@ -24,7 +29,9 @@
 ---
 
 ## 二、配置文件路径（跨平台）
+
 ### 主配置（opencode.json/jsonc）
+
 | 类型 | 路径（Linux/macOS） | 路径（Windows） |
 |------|---------------------|----------------|
 | 远程 | `.well-known/opencode`（URL 端点） | 同左 |
@@ -33,11 +40,12 @@
 | 自定义 | `$OPENCODE_CONFIG` 指定 | `%OPENCODE_CONFIG%` 指定 |
 
 ### 其他关键路径
-- 鉴权：`~/.local/share/opencode/auth.json`
-- 技能：`~/.config/opencode/skills/` 或 `./.opencode/skills/`
-- 命令：`~/.config/opencode/commands/` 或 `./.opencode/commands/`
-- 插件：`~/.config/opencode/plugins/` 或 `./.opencode/plugins/`
-- MCP：`~/.config/opencode/mcp.json` 或内嵌 `opencode.json`
+
+- **鉴权**：`~/.local/share/opencode/auth.json`
+- **技能**：`~/.config/opencode/skills/` 或 `./.opencode/skills/`
+- **命令**：`~/.config/opencode/commands/` 或 `./.opencode/commands/`
+- **插件**：`~/.config/opencode/plugins/` 或 `./.opencode/plugins/`
+- **MCP**：`~/.config/opencode/mcp.json` 或内嵌 `opencode.json`
 
 ---
 
@@ -163,232 +171,239 @@
 
 ### 3. LLM 提供商配置（核心）
 
-#### 3.1 Anthropic与OpenAI协议的核心区别
+#### 3.1 Anthropic 与 OpenAI 协议的核心区别
 
-Anthropic与OpenAI的API协议在多个维度存在显著差异，主要体现在设计哲学、接口格式、能力特性和适用场景等方面。
+Anthropic 与 OpenAI 的 API 协议在多个维度存在显著差异，主要体现在设计哲学、接口格式、能力特性和适用场景等方面。
 
 | 对比维度 | OpenAI API | Anthropic API |
 |---------|-----------|--------------|
-| **设计定位** | 行业标准制定者，兼顾C端与B端，主打通用化多场景适配 | 聚焦企业级市场，主打安全合规与场景化生产力提升，适配金融、医疗等强监管行业 |
-| **系统提示词** | 作为messages数组中的第一条消息(role: "system") | 独立的system参数，不在messages数组中 |
+| **设计定位** | 行业标准制定者，兼顾 C 端与 B 端，主打通用化多场景适配 | 聚焦企业级市场，主打安全合规与场景化生产力提升，适配金融、医疗等强监管行业 |
+| **系统提示词** | 作为 messages 数组中的第一条消息 (role: "system") | 独立的 system 参数，不在 messages 数组中 |
 | **响应结构** | `response.choices[0].message.content` | `response.content[0].text`（数组格式，为多模态准备） |
-| **上下文长度** | GPT-4 Turbo：128K token（约96,000字） | Claude 3.5 Sonnet：200K token（约150,000字） |
-| **计费模式** | 统一费率模式 | 按复杂度计价：标准请求($0.02/千token)、复杂推理($0.06/千token)、高危内容过滤(额外加收20%) |
+| **上下文长度** | GPT-4 Turbo：128K token（约 96,000 字） | Claude 3.5 Sonnet：200K token（约 150,000 字） |
+| **计费模式** | 统一费率模式 | 按复杂度计价：标准请求 ($0.02/千 token)、复杂推理 ($0.06/千 token)、高危内容过滤 (额外加收 20%) |
 | **核心优势** | 创意内容生成、多模态互动、通用性强 | 长文档处理、代码生成、安全合规、企业系统集成 |
-| **API端点** | `https://api.openai.com/v1/chat/completions` | `https://api.anthropic.com/v1/messages` |
-| **鉴权方式** | `Authorization: Bearer`头部认证 | 需同时配置`x-api-key`和`anthropic-version`头部 |
+| **API 端点** | `https://api.openai.com/v1/chat/completions` | `https://api.anthropic.com/v1/messages` |
+| **鉴权方式** | `Authorization: Bearer` 头部认证 | 需同时配置 `x-api-key` 和 `anthropic-version` 头部 |
 
-#### 3.2 在OpenCode中配置两种协议的常用大模型
+#### 3.2 在 OpenCode 中配置两种协议的常用大模型
 
-##### 3.2.1 获取API密钥
-- **OpenAI**：访问https://platform.openai.com创建API Key（格式：`sk-...`）
-- **Anthropic**：访问https://console.anthropic.com创建API Key（格式：`sk-ant-...`）
+##### 3.2.1 获取 API 密钥
+
+- **OpenAI**：访问 https://platform.openai.com 创建 API Key（格式：`sk-...`）
+- **Anthropic**：访问 https://console.anthropic.com 创建 API Key（格式：`sk-ant-...`）
 
 ##### 3.2.2 配置方式（推荐按优先级选择）
 
-- 方式一：环境变量配置（最安全）
+**方式一：环境变量配置（最安全）**
+
 ```bash
 # 临时设置（仅当前会话）
 export OPENAI_API_KEY="sk-your-openai-key"
 export ANTHROPIC_API_KEY="sk-ant-your-anthropic-key"
 
-# 永久保存（添加到shell配置文件）
+# 永久保存（添加到 shell 配置文件）
 echo 'export OPENAI_API_KEY="sk-your-openai-key"' >> ~/.zshrc
 echo 'export ANTHROPIC_API_KEY="sk-ant-your-anthropic-key"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-- 方式二：OpenCode认证命令
+**方式二：OpenCode 认证命令**
+
 ```bash
 # 运行认证命令
 opencode auth login
 
-# 选择提供商（OpenAI或Anthropic）
-# 粘贴API Key
+# 选择提供商（OpenAI 或 Anthropic）
+# 粘贴 API Key
 # 按回车完成
 ```
 
 认证信息存储在：`~/.local/share/opencode/auth.json`
 
-- 方式三：配置文件手动配置
-在项目根目录创建`opencode.json`或`opencode.jsonc`文件：
+**方式三：配置文件手动配置**
 
-```josnc
+在项目根目录创建 `opencode.json` 或 `opencode.jsonc` 文件：
+
+```jsonc
 {
-	"$schema": "https://opencode.ai/config.json",
-	"provider": {
-		// ------------------- Anthropic 示例 -------------------
-		"anthropic": {
-		  // 模型特定配置
-		  "models": {
-			"claude-sonnet-4-5-20250929": {
-			  // 默认参数：每次调用该模型都使用的设置
-			  "options": {
-				// 扩展思考模式：Claude 3.7+ 特性
-				"thinking": {
-				  "type": "enabled",      // enabled 或 disabled
-				  "budgetTokens": 16000   // 思考 Token 预算（最大 32000）
-				}
-			  },
-			  
-			  // 变体配置：通过快捷键切换的不同参数组合
-			  // 使用 Ctrl+V 在对话中循环切换
-			  "variants": {
-				"high": {
-				  "thinking": {
-					"type": "enabled",
-					"budgetTokens": 32000   // 高思考预算
-				  }
-				},
-				"max": {
-				  "thinking": {
-					"type": "enabled", 
-					"budgetTokens": 64000   // 最大思考预算
-				  }
-				}
-			  }
-			},
-			
-			// 其他模型配置...
-			"claude-opus-4-1": {
-			  "options": {
-				"temperature": 0.2   // 创造性控制（0-1）
-			  }
-			}
-		  },
-		  
-		  // 提供商级选项：影响该提供商所有模型
-		  "options": {
-			// API Key：使用 {env:VAR_NAME} 语法引用环境变量
-			// 安全最佳实践：从不硬编码密钥，始终使用环境变量
-			"apiKey": "{env:ANTHROPIC_API_KEY}",
-			
-			// 基础 URL：API 端点地址
-			// 可用于代理、企业内网部署或第三方兼容服务
-			"baseURL": "https://api.anthropic.com",
-			
-			// 超时设置（毫秒）
-			"timeout": 120000,
-			
-			// 最大重试次数
-			"maxRetries": 3
-		  }
-		},
-		
-		// ------------------- OpenAI 示例 -------------------
-		"openai": {
-		  "models": {
-			"gpt-5": {
-			  "options": {
-				"temperature": 0.7,
-				"top_p": 1.0,
-				"frequency_penalty": 0,
-				"presence_penalty": 0
-			  }
-			},
-			"o3": {
-			  "options": {
-				"reasoning_effort": "medium"  // low, medium, high
-			  }
-			}
-		  },
-		  "options": {
-			"apiKey": "{env:OPENAI_API_KEY}",
-			"baseURL": "https://api.openai.com/v1"
-		  }
-		},
-		
-		// ------------------- Google Gemini 示例 -------------------
-		"google": {
-		  "models": {
-			"gemini-2.5-pro": {
-			  "options": {
-				"safetySettings": [
-				  {
-					"category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-					"threshold": "BLOCK_NONE"
-				  }
-				]
-			  }
-			}
-		  },
-		  "options": {
-			"apiKey": "{env:GOOGLE_API_KEY}"
-		  }
-		},
-		
-		// ------------------- Azure OpenAI 示例 -------------------
-		"azure": {
-		  "models": {
-			"gpt-4o": {
-			  "options": {}
-			}
-		  },
-		  "options": {
-			"apiKey": "{env:AZURE_OPENAI_API_KEY}",
-			"baseURL": "https://{env:AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/{env:AZURE_DEPLOYMENT_NAME}",
-			"apiVersion": "2024-12-01-preview"
-		  }
-		},
-		
-		// ------------------- 自定义模型 -------------------
-		"local-openai": {
-			// 需要指定定义协议类型，这里设置openai兼容协议，如果是anthropic需改为"@ai-sdk/anthropic"
-			"npm": "@ai-sdk/openai-compatible",
-			
-			// 提供商级选项：影响该提供商所有模型
-			"options": {
-				// 本地服务地址
-				"baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-				
-				// api密钥，本地服务可能不需要密钥
-				"apiKey": "你的API key",
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    // ------------------- Anthropic 示例 -------------------
+    "anthropic": {
+      // 模型特定配置
+      "models": {
+        "claude-sonnet-4-5-20250929": {
+          // 默认参数：每次调用该模型都使用的设置
+          "options": {
+            // 扩展思考模式：Claude 3.7+ 特性
+            "thinking": {
+              "type": "enabled",      // enabled 或 disabled
+              "budgetTokens": 16000   // 思考 Token 预算（最大 32000）
+            }
+          },
+          
+          // 变体配置：通过快捷键切换的不同参数组合
+          // 使用 Ctrl+V 在对话中循环切换
+          "variants": {
+            "high": {
+              "thinking": {
+                "type": "enabled",
+                "budgetTokens": 32000   // 高思考预算
+              }
+            },
+            "max": {
+              "thinking": {
+                "type": "enabled", 
+                "budgetTokens": 64000   // 最大思考预算
+              }
+            }
+          }
+        },
         
-				// 超时设置（毫秒）
-				"timeout": 120000,
-				
-				// 最大重试次数
-				"maxRetries": 3
-			},
-			
-			// 模型特定配置
-			"models": {
-				"qwen-plus-2025-07-14": {
-					// 模型名称，在Agent界面上展示
-					"name": "qwen-plus-2025-07-14",
-					// 模型参数（如果有）：每次调用该模型都使用的设置
-					"options": {}
-				}
-			}
-		}
-	},
-	
-	// ------------------- 模型选择 -------------------
-	// 默认使用的模型，格式：提供商/模型名
-	// 必须与上面配置的 provider.models 键匹配
-	"model": "local-openai/qwen-plus-2025-07-14",
+        // 其他模型配置...
+        "claude-opus-4-1": {
+          "options": {
+            "temperature": 0.2   // 创造性控制（0-1）
+          }
+        }
+      },
+      
+      // 提供商级选项：影响该提供商所有模型
+      "options": {
+        // API Key：使用 {env:VAR_NAME} 语法引用环境变量
+        // 安全最佳实践：从不硬编码密钥，始终使用环境变量
+        "apiKey": "{env:ANTHROPIC_API_KEY}",
+        
+        // 基础 URL：API 端点地址
+        // 可用于代理、企业内网部署或第三方兼容服务
+        "baseURL": "https://api.anthropic.com",
+        
+        // 超时设置（毫秒）
+        "timeout": 120000,
+        
+        // 最大重试次数
+        "maxRetries": 3
+      }
+    },
+    
+    // ------------------- OpenAI 示例 -------------------
+    "openai": {
+      "models": {
+        "gpt-5": {
+          "options": {
+            "temperature": 0.7,
+            "top_p": 1.0,
+            "frequency_penalty": 0,
+            "presence_penalty": 0
+          }
+        },
+        "o3": {
+          "options": {
+            "reasoning_effort": "medium"  // low, medium, high
+          }
+        }
+      },
+      "options": {
+        "apiKey": "{env:OPENAI_API_KEY}",
+        "baseURL": "https://api.openai.com/v1"
+      }
+    },
+    
+    // ------------------- Google Gemini 示例 -------------------
+    "google": {
+      "models": {
+        "gemini-2.5-pro": {
+          "options": {
+            "safetySettings": [
+              {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_NONE"
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "apiKey": "{env:GOOGLE_API_KEY}"
+      }
+    },
+    
+    // ------------------- Azure OpenAI 示例 -------------------
+    "azure": {
+      "models": {
+        "gpt-4o": {
+          "options": {}
+        }
+      },
+      "options": {
+        "apiKey": "{env:AZURE_OPENAI_API_KEY}",
+        "baseURL": "https://{env:AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/{env:AZURE_DEPLOYMENT_NAME}",
+        "apiVersion": "2024-12-01-preview"
+      }
+    },
+    
+    // ------------------- 自定义模型 -------------------
+    "local-openai": {
+      // 需要指定定义协议类型，这里设置 openai 兼容协议，如果是 anthropic 需改为"@ai-sdk/anthropic"
+      "npm": "@ai-sdk/openai-compatible",
+      
+      // 提供商级选项：影响该提供商所有模型
+      "options": {
+        // 本地服务地址
+        "baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        
+        // api 密钥，本地服务可能不需要密钥
+        "apiKey": "你的 API key",
+        
+        // 超时设置（毫秒）
+        "timeout": 120000,
+        
+        // 最大重试次数
+        "maxRetries": 3
+      },
+      
+      // 模型特定配置
+      "models": {
+        "qwen-plus-2025-07-14": {
+          // 模型名称，在 Agent 界面上展示
+          "name": "qwen-plus-2025-07-14",
+          // 模型参数（如果有）：每次调用该模型都使用的设置
+          "options": {}
+        }
+      }
+    }
+  },
+  
+  // ------------------- 模型选择 -------------------
+  // 默认使用的模型，格式：提供商/模型名
+  // 必须与上面配置的 provider.models 键匹配
+  "model": "local-openai/qwen-plus-2025-07-14",
 
-	// ------------------- 提供商控制 -------------------
+  // ------------------- 提供商控制 -------------------
 
-	// 白名单：仅启用列出的提供商（优先级低于黑名单）
-	"enabled_providers": ["anthropic", "openai"],
+  // 白名单：仅启用列出的提供商（优先级低于黑名单）
+  "enabled_providers": ["anthropic", "openai"],
 
-	// 黑名单：禁用特定提供商（优先级高于白名单）
-	// 用于临时禁用某个提供商而不删除配置
-	"disabled_providers": ["google"],
+  // 黑名单：禁用特定提供商（优先级高于白名单）
+  // 用于临时禁用某个提供商而不删除配置
+  "disabled_providers": ["google"],
 
-	// 注意：若同时设置，disabled_providers 优先
+  // 注意：若同时设置，disabled_providers 优先
 }
 ```
-> 配置小结：
-> **provider**：定义了LLM供应商的配置域，接着它的下一层配置就是LLM供应商的集合，包括 **知名大模型供应商（openai、anthropic、google等）** 或者 **自定义大模型（个人搭建、公司搭建的大模型等）**；
-> 各个LLM供应商的配置主要包括npm、name、options、models等
-> 1. **npm**（可选）：大模型的接入协议，**openai** 或者 **anthropic**协议，对于知名供应商可以不用配置，opencode知道它们的协议类型，对于自定义大模型建议配置上；
-> 2. **name**（可选）：LLM供应商的别名，会在Agent上显示；
-> 3. **options**（关键）：LLM供应商高级选项，选项主要有**baseURL（基础服务地址）**、**apiKey（API密钥）**、**timeout（超时时间）**、**maxRetries（最大重试次数）**等；
-> 4. **models**（关键）：LLM供应商的模型配置，可以配置多个模型，每个模型的配置主要有 **name（模型的别名，会在Agent上显示）** 、 **options（模型的特殊选项）** 等；
+
+> **配置小结：**
+> 
+> - **provider**：定义了 LLM 供应商的配置域，接着它的下一层配置就是 LLM 供应商的集合，包括 **知名大模型供应商（openai、anthropic、google 等）** 或者 **自定义大模型（个人搭建、公司搭建的大模型等）**
+> - 各个 LLM 供应商的配置主要包括 npm、name、options、models 等
+>   1. **npm**（可选）：大模型的接入协议，**openai** 或者 **anthropic** 协议，对于知名供应商可以不用配置，opencode 知道它们的协议类型，对于自定义大模型建议配置上
+>   2. **name**（可选）：LLM 供应商的别名，会在 Agent 上显示
+>   3. **options**（关键）：LLM 供应商高级选项，选项主要有**baseURL（基础服务地址）**、**apiKey（API 密钥）**、**timeout（超时时间）**、**maxRetries（最大重试次数）**等
+>   4. **models**（关键）：LLM 供应商的模型配置，可以配置多个模型，每个模型的配置主要有 **name（模型的别名，会在 Agent 上显示）**、**options（模型的特殊选项）** 等
 
 ##### 3.2.3 验证配置
+
 ```bash
 # 查看已配置的认证信息
 opencode auth list
@@ -399,13 +414,14 @@ opencode chat --model anthropic/claude-3-5-sonnet
 ```
 
 ##### 3.2.4 安全最佳实践
-1. **绝不将API Key提交到代码仓库**：使用`.gitignore`排除配置文件
-2. **使用密钥管理服务**：生产环境推荐使用AWS Secrets Manager、Azure Key Vault等
-3. **定期轮换API Key**：降低泄露风险
-4. **设置请求超时**：在配置中添加`timeout`参数（单位：毫秒）
-5. **启用缓存**：设置`setCacheKey: true`提高性能
 
-通过以上配置，您可以在OpenCode中灵活切换使用OpenAI和Anthropic的云端大模型，同时也能接入支持这两种协议的本地大模型，实现统一的管理和调用接口。
+1. **绝不将 API Key 提交到代码仓库**：使用 `.gitignore` 排除配置文件
+2. **使用密钥管理服务**：生产环境推荐使用 AWS Secrets Manager、Azure Key Vault 等
+3. **定期轮换 API Key**：降低泄露风险
+4. **设置请求超时**：在配置中添加 `timeout` 参数（单位：毫秒）
+5. **启用缓存**：设置 `setCacheKey: true` 提高性能
+
+通过以上配置，您可以在 OpenCode 中灵活切换使用 OpenAI 和 Anthropic 的云端大模型，同时也能接入支持这两种协议的本地大模型，实现统一的管理和调用接口。
 
 ### 4. 变量替换语法详解
 
@@ -634,7 +650,7 @@ opencode chat --model anthropic/claude-3-5-sonnet
     // 内置技能
     "git": true,           // Git 操作增强
     "docker": true,        // Docker 容器管理
-    "kubernetes": false,    // K8s 操作（禁用）
+    "kubernetes": false,   // K8s 操作（禁用）
     
     // 自定义技能：通过目录或插件加载
     "react-expert": true,
@@ -647,7 +663,7 @@ opencode chat --model anthropic/claude-3-5-sonnet
     // 技能路径：加载技能的目录
     "paths": [
       "~/.config/opencode/skills",     // 全局技能
-      "./.opencode/skills"              // 项目技能（优先级更高）
+      "./.opencode/skills"             // 项目技能（优先级更高）
     ],
     
     // 具体技能配置
@@ -942,17 +958,22 @@ opencode chat --model anthropic/claude-3-5-sonnet
   "emacsMode": false
 }
 ```
+
 ### 10. 权限配置（Permission）
+
 ```jsonc
 {
   "permission": {
-    "edit": "allow", // 允许写文件：allow/ask/deny
-    "bash": "ask", // 执行 shell：allow/ask/deny
-    "network": "deny", // 网络访问
-    "delete": "ask", // 删除文件
-    "read": ["src/", "docs/"], // 允许读取目录
-    "write": ["src/"] // 允许写入目录
+    "edit": "allow",      // 允许写文件：allow/ask/deny
+    "bash": "ask",        // 执行 shell：allow/ask/deny
+    "network": "deny",    // 网络访问
+    "delete": "ask",      // 删除文件
+    "read": ["src/", "docs/"],  // 允许读取目录
+    "write": ["src/"]     // 允许写入目录
   }
 }
 ```
+
 ---
+
+*文档版本：1.0 | 最后更新：2026-04-27*
