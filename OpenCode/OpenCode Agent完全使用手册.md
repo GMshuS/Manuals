@@ -431,115 +431,450 @@ permission: deny
 - ❌ 禁止用户手动 `@` 调用
 - ✅ 仅允许 Primary 内部自动委派调用
 
-### 5.2 会话导航
+### 5.2 通信原理
 
-- **<Leader>+Right**：父会话→子会话 1→子会话 2→...→父会话
-- **<Leader>+Left**：反向循环导航
-- 作用：在主对话与子 Agent 专项工作之间无缝切换
+我给你讲**底层原理 + 通信流程 + 固定返回格式 + 主代理接收逻辑**，看完你就能自己控制子代理怎么给主代理回传数据、怎么让主代理自动接续流程。
 
-### 5.3 双向交互通信机制
+#### 5.2.1 核心结论（先记死）
+- **Subagent 不能主动发起调用，只能被动被 Primary 召唤**
+- Subagent 做完任务后，**必须输出「结构化总结结果」**，OpenCode 会自动把这份总结**传回主会话**
+- 子代理**独立上下文隔离**，只把**最终摘要**回流给 Primary，不会把中间过程全塞回去
+- Primary 会**自动接收子代理返回的摘要**，然后继续下一步调度（再调别的子代理、继续编码、给用户答复）
 
-#### 下行：Primary → Subagent（任务下发）
+#### 5.2.2 底层通信完整流程（一步不漏）
+##### 步骤1：调用发起
+Primary / 用户 → 发起 `@xxx` 调用 Subagent
+OpenCode **新开独立子会话**，隔离上下文、模型、权限。
 
-主代理只会**按需投递精简上下文**，不会推送完整会话历史：
-- 核心需求描述
-- 关键文件路径、代码片段
-- 项目基础结构信息
-- 约束规则与输出要求
+##### 步骤2：任务下发（下行）
+Primary 会自动精简下发：
+- 用户原始需求
+- 当前项目文件结构
+- 相关代码片段
+- 约束规则
+**不会把整个主会话历史全发过去**，节省 token。
 
-#### 上行：Subagent → Primary（结果上报）
+##### 步骤3：Subagent 内部执行
+子代理自己读文件、分析、编码、审查、跑命令，**中间日志留在子会话里**，不回主会话。
 
-子代理不会返回完整执行日志，只回流**浓缩有效信息**：
-- 最终结论、分析报告、代码片段
-- 问题清单、优化建议、错误原因
-- 关键文件位置、检索结果
+##### 步骤4：结果回流（上行关键）
+Subagent **输出最终结论/报告** → OpenCode 自动**截断中间过程**，只把**最终总结**推回 Primary 主会话。
 
-### 5.4 会话隔离优势
+##### 步骤5：Primary 接收并继续调度
+Primary 读到子代理结果后：
+- 分析是否完成
+- 是否有 bug、是否要重写
+- 自动下一个环节：再调 @code / @review / @test / @bugfix
+- 最终整合所有子代理结果给用户
 
-- 子任务细节封存于独立子会话，**主会话不会膨胀超限**
-- 多子任务互不干扰，排查、回滚、单独查看历史更方便
-- 不同子代理可使用独立模型、温度、权限，互不影响
+#### 5.2.3 Subagent 返回结果的「硬性规则」
+##### 规则1：必须收尾：给出**明确结构化总结**
+子代理结尾必须固定输出：
+- 任务结论
+- 关键文件路径
+- 问题清单/通过状态
+- 下一步建议
 
-### 5.5 权限 & 工具 交互规则
+**不可以只扔一堆代码、日志不总结**，否则 Primary 识别不了、无法自动流转。
 
-1. **完全独立配置**
-   Primary 和 Subagent 的 `tools`、`permission` 完全隔离
+##### 规则2：中间过程自动屏蔽
+子代理中间：翻文件、思考、调试日志
+→ **不会返回给 Primary**
+只回流你**最后写的总结块**。
 
-2. **文件系统互通**
-   只要自身权限允许，双方可读写同一份项目文件
+##### 规则3：返回内容格式建议（标准规范）
+你可以在自定义 Subagent 的 **Prompt 里强制要求**固定返回模板，让 Primary 能稳定解析：
 
-3. **命令隔离管控**
-   Bash 命令权限各自独立，主代理允许的命令，子代理可直接禁用
-
-### 5.6 Primary 之间的交互
-
-`Build Agent` / `Plan Agent` 同属 **Primary 同级关系**：
-1. 无调用、无委派、无隔离
-2. 通过 `Tab` 快捷键**无缝切换**
-3. 共享**同一个主会话上下文**
-
-> **区别**：
-> - 主代理 ↔ 主代理：**共享上下文、切换协作**
-> - 主代理 ↔ 子代理：**隔离上下文、委派协作**
-
-### 5.7 协作流程图
-
-```
-用户提问
-    ↓
-Primary Agent（决策/调度）
-├─ 自动/手动 ──→ 拉起 Subagent 独立子会话
-├─ 下发精简任务上下文
-    ↓
-Subagent（专项执行）
-├─ 自有权限/自有模型/独立指令
-├─ 完成子任务
-    ↓
-浓缩结果回流
-    ↓
-Primary 整合输出最终答案
+```markdown
+#### 任务完成结果
+1. 任务状态：通过 / 不通过 / 需修复
+2. 涉及文件：
+- src/xxx.js
+- ...
+3. 核心结论：
+...
+4. 建议下一步：
+调用 @code / @review / @test / @bugfix
 ```
 
-### 5.8 典型协作流程
+只要子代理按这个格式收尾，Primary 就能**自动识别状态、自动走下一个流程**。
 
-1. **Plan Agent**：分析需求→制定实现计划→拆分任务
-2. **Build Agent**：接收计划→调用子 Agent 执行专项任务
-   - `@explore`：快速了解现有代码结构
-   - `@general`：并行处理复杂子任务
-3. **Plan Agent**：审查 Build Agent 产出→提供优化建议
-4. **Build Agent**：根据建议完善代码→完成最终实现
-
----
-
-## 六、多 Agent 实战示例
-
-### 6.1 企业级开发流程架构
-
-从零定制一套完整的企业级开发流程：
-- 1 个 **总调度 Primary Agent**（核心大脑，统筹全流程）
-- 5 个 **专业 Subagent**（计划、编码、BUG 修复、代码审查、编译测试）
-- 完整的自动化开发闭环：**需求 → 计划 → 编码 → 审查 → 测试 → 修复 → 交付**
-
-#### 角色分工
-
-| 角色 | 类型 | 核心职责 | 权限 |
-|------|------|----------|------|
-| **DevMaster** | Primary（主代理） | 总调度，接收需求，自动调用子代理，整合结果 | 全权限（安全管控） |
-| **PlanAgent** | Subagent（子代理） | 需求拆解、开发计划、架构设计 | 只读，无修改 |
-| **CodeAgent** | Subagent（子代理） | 编写/生成业务代码、组件、接口 | 读写文件，无危险命令 |
-| **BugFixAgent** | Subagent（子代理） | 排查 BUG、修复代码、调试逻辑 | 读写文件，调试权限 |
-| **ReviewAgent** | Subagent（子代理） | 代码质量审查、安全漏洞检测、规范校验 | 只读，无修改 |
-| **TestAgent** | Subagent（子代理） | 编译代码、执行单元测试、运行项目 | 允许安全 bash 命令 |
-
-### 6.2 完整配置文件
-
-#### 主代理：DevMaster（总调度）
-
-文件：`.opencode/agents/dev-master.md`
+#### 5.2.4 实操：怎么在自定义 Subagent 里强制规范返回
+举例子，给你的 `review-agent.md` 加强制返回规则：
 
 ```markdown
 ---
-description: 全流程开发总调度，自动调用计划/编码/审查/测试/修复子代理
+description: 代码审查子代理
+mode: subagent
+name: review
+...
+---
+你是代码审查专家，只读不修改。
+执行完审查后，**必须严格按下面固定格式返回结果**，禁止只贴日志不总结：
+
+### 审查结果
+1. 审查状态：【通过 / 不通过】
+2. 问题清单：
+- 问题1
+- 问题2
+3. 涉及文件路径：
+- 文件1
+4. 下一步建议：
+如需修复请调用 @bugfix，无需修改可进入测试环节
+```
+
+只要你每个 Subagent 都加这一条：
+**强制固定结构化输出**
+Primary 就能**稳定接收、自动判断、自动流转**。
+
+#### 5.2.5 Primary 如何接收 & 感知子代理结果
+1. OpenCode 把子代理**最终总结**插入主会话上下文
+2. Primary 能看到：状态、文件、结论、下一步建议
+3. Primary 内置逻辑会自动判断：
+   - 审查通过 → 自动调 @test
+   - 审查不通过 → 自动调 @bugfix
+   - 测试失败 → 自动调 @bugfix
+4. 全程不需要用户干预
+
+#### 5.2.6 关键限制（必须知道）
+1. ❌ Subagent **不能主动呼叫 Primary**，只能被动返回结果
+2. ❌ Subagent **不能再嵌套调用其他 Subagent**，只有 Primary 能调度
+3. ✅ 子会话中间过程**不回传**，只回传最终总结
+4. ✅ 返回内容**只看子代理最后输出**，前面思考过程全部丢弃
+5. ✅ 多 Subagent 并行调用，结果会**逐个回流**给 Primary，互不干扰
+
+#### 5.2.7 一句话极简总结
+1. Primary 召唤 Subagent
+2. Subagent 在独立会话干活
+3. Subagent **最后输出结构化总结**
+4. OpenCode 自动把总结传回 Primary
+5. Primary 读取结果，自动调度下一个子代理
+
+---
+
+## 六、agent调用slash命令跟skill技能
+
+### 6.1 先分清三个东西
+- **Slash 命令（/xxx）**：  
+  本质是「封装好的提示词模板」，可绑定 Agent、模型、描述；可手动 `/xxx`，也可被 Agent 调用。
+- **Skill（技能）**：  
+  可复用的「专业指令包」，放在 `.opencode/skills/xxx/SKILL.md` 或全局目录；Agent 用 `skill({name})` 动态加载。
+- **Agent（Primary/Subagent）**：  
+  角色+权限+上下文隔离的执行体；**只有 Agent 能调用 Skill**；Slash 可直接触发 Agent，或在 Agent 里被调用。
+
+一句话：
+- **Slash = 快捷入口**（可触发 Agent）
+- **Skill = 能力插件**（被 Agent 加载）
+- **Agent = 执行容器**（调度 Slash、加载 Skill、干活）
+
+### 6.2 Agent 调用 Slash 命令（两种写法）
+#### 1）在 Agent Prompt 里直接写「执行 /xxx」
+适合：把 Slash 当成固定步骤。
+```markdown
+### 你的指令
+你是 Primary Agent，负责开发流程调度。
+按顺序执行：
+1. 调用 /plan 生成开发计划
+2. 调用 /code 编写代码
+3. 调用 /review 审查代码
+...
+```
+效果：Agent 会**模拟输入 /plan**，触发对应的 Slash 命令（可能绑定了 Subagent）。
+
+#### 2）Slash 绑定 Agent（推荐，你之前的流程就该这么用）
+在 `opencode.jsonc` 或 `commands/plan.md` 定义：
+```jsonc
+// commands/plan.md
+---
+description: 生成开发计划
+agent: plan   // 绑定到 plan Subagent
+---
+请拆解需求，输出结构化开发计划...
+```
+然后 Primary Agent 只要写：
+```
+执行 /plan
+```
+就会**自动唤醒 plan Subagent**，执行命令里的 Prompt，最后把结构化结果返回给 Primary。
+
+#### 3）常用内置 Slash（可直接在 Agent 里用）
+```
+/new       新开会话
+/undo      撤销上一步
+/compact   压缩上下文
+/details   显示工具执行详情
+/exit      退出
+```
+
+### 6.3 Agent 调用 Skill 技能（标准写法）
+#### 1）Skill 存放位置
+- 项目级（仅当前项目）：`.opencode/skills/[skill名]/SKILL.md`
+- 全局级（所有项目）：`~/.config/opencode/skills/[skill名]/SKILL.md`
+
+#### 2）Skill 文件格式（必须）
+示例：`.opencode/skills/code-review/SKILL.md`
+```markdown
+---
+name: code-review
+description: 代码审查，检查规范、安全、性能
+tags: [review, code, quality]
+---
+### What I do
+- 检查代码规范与格式
+- 检查安全漏洞与异常处理
+- 检查性能问题与冗余代码
+### Steps
+1. 读取指定文件
+2. 按清单逐项检查
+3. 输出结构化审查结果（按之前约定模板）
+```
+
+#### 3）Agent 加载 Skill（固定语法）
+Agent Prompt 里写：
+```markdown
+你是 review Subagent，执行代码审查。
+先加载技能：
+[{"name":"skill","parameters":{"name":"code-review"}}]
+加载完成后，对 src/ 下所有文件进行审查，严格按标准模板输出结果。
+```
+- Agent 看到 `` 会**自动调用 skill 工具**，读取 SKILL.md 内容，并入当前 Prompt。
+- **只有 Agent 能调用 Skill**，Subagent 也可以加载 Skill。
+
+#### 4）Primary → Subagent → Skill 链式调用（你要的开发流程）
+流程：
+1. Primary 收到需求
+2. Primary 调用 `/plan`（绑定 plan Subagent）
+3. plan Subagent 加载 `project-plan` Skill → 输出计划
+4. Primary 收到计划 → 调用 `/code`（绑定 code Subagent）
+5. code Subagent 加载 `code-generate` Skill → 输出代码
+6. Primary 调用 `/review`（绑定 review Subagent）
+7. review Subagent 加载 `code-review` Skill → 输出审查结果
+8. 依此类推：/test → 加载 `compile-test` Skill；/bugfix → 加载 `bug-fix` Skill
+
+### 6.4 Slash 与 Skill 区别（别混用）
+- **Slash（/xxx）**
+  - 是「命令/快捷入口」
+  - 可绑定 Agent、模型、描述
+  - 触发：手动输入 /xxx 或 Agent 写「执行 /xxx」
+  - 适合：**固定流程入口**（如 /plan、/code、/review）
+- **Skill（xxx）**
+  - 是「可复用指令包」
+  - 必须用 `skill({name})` 加载
+  - 触发：Agent 主动加载
+  - 适合：**专业能力封装**（如代码审查、测试用例生成、BUG修复）
+
+最佳实践：
+- 用 **Slash 绑定 Subagent**（/review → review Subagent）
+- Subagent 内部 **加载对应 Skill**（review Subagent → code-review Skill）
+
+### 6.5 直接可用的示例（套进你现有流程）
+#### 1）Slash：commands/review.md（绑定 review Subagent）
+```markdown
+---
+description: 代码审查流程
+agent: review
+---
+请对指定代码进行审查，输出结构化结果。
+```
+
+#### 2）Skill：.opencode/skills/code-review/SKILL.md
+```markdown
+---
+name: code-review
+description: 代码审查标准流程
+---
+### 审查清单
+1. 代码规范：命名、格式、注释
+2. 逻辑正确性：边界条件、异常处理
+3. 安全性：注入、权限、敏感信息
+4. 性能：复杂度、冗余、资源释放
+### 输出格式
+严格按之前约定的「子代理任务结果」模板输出。
+```
+
+#### 3）review Subagent：review-agent.md
+```markdown
+---
+name: review
+mode: subagent
+description: 代码审查子代理
+---
+你是资深代码审查专家，只读不修改。
+加载审查技能：
+[{"name":"skill","parameters":{"name":"code-review"}}]
+按技能要求执行审查，**必须按标准模板输出结果**，省略中间思考过程。
+```
+
+#### 4）Primary Agent：dev-master.md（调度）
+```markdown
+### 自动调度规则
+收到编码完成 → 执行 /review
+收到审查结果 → 根据状态：
+- 通过 → 执行 /test
+- 有问题 → 执行 /bugfix
+```
+
+### 6.6 关键规则总结（必记）
+1. **Slash 触发 Agent，Agent 加载 Skill**，三层结构解耦。
+2. **只有 Agent 能调用 Skill**，用固定 `` 格式。
+3. Subagent 也是 Agent，**可加载 Skill**，但**不能调用其他 Subagent**（只有 Primary 能调度）。
+4. 返回结果：**Skill 输出 → Subagent 汇总 → 结构化模板 → Primary 接收**。
+
+---
+
+## 七、全套实战案例
+
+### 7.1 最终目录结构（直接照着建文件夹）
+```
+项目根目录/
+└── .opencode/
+    ├── commands/          ## Slash 命令 /plan /code /review /test /bugfix
+    ├── skills/           ## 5套标准技能包
+    └── agents/           ## 主Agent + 5个Subagent
+```
+
+### 7.2 Slash 命令（5个，放在 `.opencode/commands/`）
+#### 7.2.1 plan.md
+```markdown
+---
+description: 需求拆解、架构方案、开发任务规划
+agent: plan
+---
+请基于当前需求与项目结构，完成专业开发规划，并按标准结构化格式输出结果。
+```
+
+#### 7.2.2 code.md
+```markdown
+---
+description: 根据开发计划编写业务代码、接口、组件
+agent: code
+---
+严格按照已有的开发计划，编写规范可运行代码，按标准结构化格式输出结果。
+```
+
+#### 7.2.3 review.md
+```markdown
+---
+description: 代码规范、安全、性能全量审查
+agent: review
+---
+对现有新增/修改代码进行全面质量与安全审查，按标准结构化格式输出审查报告。
+```
+
+#### 7.2.4 test.md
+```markdown
+---
+description: 项目编译、依赖安装、单元测试、运行校验
+agent: test
+---
+执行项目编译、依赖校验、测试运行，输出结构化测试结果。
+```
+
+#### 7.2.5 bugfix.md
+```markdown
+---
+description: 定位报错、修复BUG、最小改动还原逻辑
+agent: bugfix
+---
+根据测试/审查问题定位根因，最小化修改修复BUG，按标准格式输出修复结果。
+```
+
+### 7.3 Skill 技能包（5个，放在 `.opencode/skills/`）
+#### 7.3.1 plan-skill/SKILL.md
+```markdown
+---
+name: plan-skill
+description: 需求分析、架构设计、任务拆分标准技能
+tags: [plan,架构,需求拆解]
+---
+### 工作标准
+1. 梳理用户原始需求，明确功能边界与验收标准
+2. 分析现有项目目录、技术栈、依赖框架
+3. 拆分模块、划分文件结构、定义接口契约
+4. 识别风险点、缺失依赖、兼容性问题
+
+### 输出约束
+必须使用统一「子代理任务结果」结构化模板输出，
+只给结论与规划，不编写任何代码、不执行命令。
+```
+
+#### 7.3.2 code-skill/SKILL.md
+```markdown
+---
+name: code-skill
+description: 标准化业务代码编写技能
+tags: [coding,开发,接口]
+---
+### 编码规范
+1. 遵循当前项目技术栈与目录规范
+2. 代码带完整注释、参数校验、异常捕获
+3. 命名规范、结构清晰、可直接运行
+4. 只按开发计划实现，不额外扩展无关功能
+
+### 输出约束
+完成编码后列出所有新建/修改文件，使用统一结构化模板输出。
+```
+
+#### 7.3.3 review-skill/SKILL.md
+```markdown
+---
+name: review-skill
+description: 代码审查标准检查项
+tags: [review,质量,安全]
+---
+### 审查检查清单
+#### 1. 代码规范
+命名、缩进、注释、冗余代码、魔法值
+#### 2. 逻辑质量
+边界条件、空值判断、异常处理、循环逻辑
+#### 3. 安全风险
+注入、越权、敏感信息泄露、参数未校验
+#### 4. 性能问题
+重复查询、资源未释放、低效循环
+
+### 输出约束
+只做审查不修改，按统一结构化模板输出问题清单与结论。
+```
+
+#### 7.3.4 test-skill/SKILL.md
+```markdown
+---
+name: test-skill
+description: 项目编译、构建、测试标准化流程
+tags: [test,编译,构建]
+---
+### 测试工作流程
+1. 检查依赖完整性
+2. 执行项目编译/构建命令
+3. 运行单元测试/基础功能校验
+4. 记录报错日志、依赖缺失、编译异常
+
+### 输出约束
+明确编译/测试状态，列出异常文件与原因，按统一模板输出。
+```
+
+#### 7.3.5 bugfix-skill/SKILL.md
+```markdown
+---
+name: bugfix-skill
+description: BUG定位、排查、最小化修复技能
+tags: [bugfix,调试,问题修复]
+---
+### 修复原则
+1. 先定位根因，不盲目改代码
+2. 最小改动修复，不重构原有正常逻辑
+3. 修复后校验功能可用性
+4. 记录问题原因、改动点、验证方式
+
+### 输出约束
+按统一结构化模板输出：根因、修改文件、修复说明、验证结果。
+```
+
+### 7.4 Agent 配置（6个，放在 `.opencode/agents/`）
+#### 7.4.1 主调度代理：dev-master.md（Primary）
+```markdown
+---
+description: 全流程开发总调度，自动按流程调用规划/编码/审查/测试/修复
 mode: primary
 name: devmaster
 temperature: 0.2
@@ -555,24 +890,28 @@ permission:
     "git status": "allow"
 ---
 
-# 核心指令
-你是**开发流程总调度师**，严格按照以下流程执行：
-1. 接收用户开发需求，优先调用 @plan 生成开发计划
-2. 根据计划调用 @code 编写代码
-3. 代码完成后调用 @review 审查代码
-4. 审查通过调用 @test 编译测试
-5. 测试出现 BUG 调用 @bugfix 修复
-6. 所有环节通过，交付最终成果
-7. 自动协调所有子代理，不重复工作，不越权操作
+## 角色职责
+你是项目全流程开发总调度官，接收用户需求，全自动驱动完整开发流水线。
+
+## 固定调度规则
+1. 接收用户需求 → 执行 /plan
+2. 收到【规划完成】 → 执行 /code
+3. 收到【编码完成】 → 执行 /review
+4. 收到【审查通过】 → 执行 /test
+5. 收到【审查存在问题】 → 执行 /bugfix
+6. 收到【编译/测试失败】 → 执行 /bugfix
+7. 收到【BUG修复完成】 → 自动执行 /test 重新验证
+8. 测试全部通过 → 汇总所有成果，流程结束交付
+
+## 通信规则
+严格识别各子代理返回的「子代理任务结果」结构化内容，
+只根据「执行状态、建议下一步动作」自动调度，不随意跳过环节。
 ```
 
-#### 子代理：PlanAgent（开发计划）
-
-文件：`.opencode/agents/plan-agent.md`
-
+#### 7.4.2 子代理：plan-agent.md
 ```markdown
 ---
-description: 需求分析、开发计划拆解、架构设计、任务拆分
+description: 需求分析、架构规划、任务拆分
 mode: subagent
 name: plan
 temperature: 0.0
@@ -581,26 +920,33 @@ tools:
   write: false
   edit: false
   bash: false
-  webfetch: false
 permission:
   all: allow
 ---
+加载技能：
+[{"name":"skill","parameters":{"name":"plan-skill"}}]
 
-# 角色：专业架构师&计划员
-你只做**只读规划**，不修改任何代码：
-1. 分析用户需求，拆解为可执行的开发任务
-2. 输出技术方案、文件结构、实现步骤
-3. 标注风险点、依赖项、验收标准
-4. 输出格式：清晰的 markdown 计划文档
+你只做需求分析与方案规划，不编写代码、不修改文件、不执行命令。
+
+### 强制输出规范
+任务完成后必须严格使用以下固定模板输出：
+## 子代理任务结果
+1. 任务类型：开发计划拆解
+2. 执行状态：【规划完成 / 需求不明确】
+3. 涉及文件列表：
+- 
+4. 核心摘要：
+
+5. 问题清单：
+无
+6. 建议下一步动作：
+进行编码开发
 ```
 
-#### 子代理：CodeAgent（代码编写）
-
-文件：`.opencode/agents/code-agent.md`
-
+#### 7.4.3 子代理：code-agent.md
 ```markdown
 ---
-description: 根据开发计划编写业务代码、接口、组件
+description: 根据规划编写业务代码
 mode: subagent
 name: code
 temperature: 0.1
@@ -609,54 +955,33 @@ tools:
   write: true
   edit: true
   bash: false
-  webfetch: true
 permission:
   write: ask
   edit: ask
 ---
+加载技能：
+[{"name":"skill","parameters":{"name":"code-skill"}}]
 
-# 角色：高级开发工程师
-严格按照计划编写代码：
-1. 遵循行业最佳实践，代码规范、注释完整
-2. 只编写计划内的代码，不随意修改
-3. 生成可直接运行的代码
-4. 主动告知代码编写进度和文件路径
+严格按照开发计划实现功能，遵循项目规范，代码带注释、健壮可运行。
+
+### 强制输出规范
+## 子代理任务结果
+1. 任务类型：业务代码编写
+2. 执行状态：【编码完成 / 存在逻辑缺失】
+3. 涉及文件列表：
+- 
+4. 核心摘要：
+
+5. 问题清单：
+无
+6. 建议下一步动作：
+进行代码审查
 ```
 
-#### 子代理：BugFixAgent（BUG 修复）
-
-文件：`.opencode/agents/bugfix-agent.md`
-
+#### 7.4.4 子代理：review-agent.md
 ```markdown
 ---
-description: 排查代码 BUG、逻辑错误、异常问题，精准修复
-mode: subagent
-name: bugfix
-temperature: 0.1
-tools:
-  read: true
-  write: true
-  edit: true
-  bash: false
-permission:
-  edit: allow
----
-
-# 角色：资深调试专家
-专注 BUG 修复：
-1. 分析报错信息、定位问题代码
-2. 最小化修改，不破坏原有逻辑
-3. 修复后验证问题是否解决
-4. 输出修复说明
-```
-
-#### 子代理：ReviewAgent（代码审查）
-
-文件：`.opencode/agents/review-agent.md`
-
-```markdown
----
-description: 代码质量审查、安全漏洞检测、规范校验、优化建议
+description: 代码质量安全审查
 mode: subagent
 name: review
 temperature: 0.0
@@ -668,21 +993,29 @@ tools:
 permission:
   all: allow
 ---
+加载技能：
+[{"name":"skill","parameters":{"name":"review-skill"}}]
 
-# 角色：代码审查专家
-只读审查，不修改代码：
-1. 检查代码规范、潜在 BUG、安全漏洞
-2. 校验性能、可读性、可维护性
-3. 输出审查报告：通过/不通过 + 问题清单
+只读审查，不修改任何代码，按审查清单逐项校验。
+
+### 强制输出规范
+## 子代理任务结果
+1. 任务类型：代码质量&安全审查
+2. 执行状态：【审查通过 / 存在规范问题 / 存在安全隐患】
+3. 涉及文件列表：
+- 
+4. 核心摘要：
+
+5. 问题清单：
+- 
+6. 建议下一步动作：
+进入BUG修复 / 执行编译测试
 ```
 
-#### 子代理：TestAgent（编译测试）
-
-文件：`.opencode/agents/test-agent.md`
-
+#### 7.4.5 子代理：test-agent.md
 ```markdown
 ---
-description: 项目编译、单元测试、运行验证、构建打包
+description: 项目编译、构建、测试校验
 mode: subagent
 name: test
 temperature: 0.0
@@ -697,87 +1030,90 @@ permission:
     "npm install *": "allow"
     "npm run build": "allow"
     "npm run test": "allow"
-    "npm run dev": "allow"
+---
+加载技能：
+[{"name":"skill","parameters":{"name":"test-skill"}}]
+
+负责依赖检查、编译构建、运行测试，记录异常日志。
+
+### 强制输出规范
+## 子代理任务结果
+1. 任务类型：项目编译&单元测试
+2. 执行状态：【编译通过测试正常 / 编译失败 / 测试用例不通过】
+3. 涉及文件列表：
+- 
+4. 核心摘要：
+
+5. 问题清单：
+- 
+6. 建议下一步动作：
+进入BUG修复 / 流程结束交付
+```
+
+#### 7.4.6 子代理：bugfix-agent.md
+```markdown
+---
+description: BUG定位与最小化修复
+mode: subagent
+name: bugfix
+temperature: 0.1
+tools:
+  read: true
+  write: true
+  edit: true
+  bash: false
+permission:
+  edit: allow
+---
+加载技能：
+[{"name":"skill","parameters":{"name":"bugfix-skill"}}]
+
+根据审查/测试问题定位根因，最小改动修复，不破坏原有正常逻辑。
+
+### 强制输出规范
+## 子代理任务结果
+1. 任务类型：BUG定位与修复
+2. 执行状态：【修复完成验证通过 / 暂未定位根因】
+3. 涉及文件列表：
+- 
+4. 核心摘要：
+
+5. 问题清单：
+无
+6. 建议下一步动作：
+执行编译测试
+```
+
+#### 7.5 使用步骤
+1. 在项目根目录建好上面三层文件夹：`commands`、`skills`、`agents`
+2. 把对应文件原样粘贴进去
+3. 重启 OpenCode
+4. 按 `Tab` 切换到主代理 **devmaster**
+5. 直接发需求，例如：
+```
+开发一个用户登录接口，包含参数校验、JWT签发、统一异常返回
+```
+**全自动流程**：
+规划 → 编码 → 审查 → 测试 → 有bug自动修复 → 再测试 → 交付
+
+### 7.6 整套体系工作链路
+1. 输入 `/plan` → 绑定 plan子代理 → 加载 plan-skill → 结构化结果返回主代理
+2. 主代理识别结果 → 自动调用 `/code`
+3. 依次流转：编码→审查→测试→修复
+4. 所有子代理**统一模板返回**，主代理**固定规则调度**，全程无人干预。
+
+### 7.7 测试指令（直接粘贴对话发送）
+```
+基于 FastAPI 新建一个简易工具模块：
+1. 编写健康检查接口 /health
+2. 编写基础示例接口 /api/info
+3. 增加全局异常捕获、统一JSON返回格式
+4. 代码添加完整注释，保证可直接运行
+```
+
 ---
 
-# 角色：测试&构建工程师
-负责编译和测试：
-1. 执行编译命令，检查是否报错
-2. 运行单元测试，验证功能
-3. 启动项目，验证基础可用性
-4. 输出测试结果：通过/失败 + 日志
-```
-
-### 6.3 完整开发流程演示
-
-#### 场景：开发用户登录接口
-
-**步骤 1：用户发送需求**
-```
-我需要开发一个用户登录接口，包含参数校验、JWT 签发、错误返回
-```
-
-**步骤 2：Primary 自动调用 @plan**
-```
-已自动调用计划代理，生成开发方案：
-1. 需求分析：用户登录接口，POST 请求，参数校验，JWT 签发
-2. 技术栈：Node.js/Express
-3. 文件：src/api/login.js
-4. 步骤：编写接口 → 校验参数 → 生成 Token → 错误处理
-```
-
-**步骤 3：Primary 自动调用 @code**
-```
-已自动调用编码代理，完成代码编写：
-文件：src/api/login.js
-已生成完整登录接口代码
-```
-
-**步骤 4：Primary 自动调用 @review**
-```
-已自动调用审查代理，代码审查结果：
-✅ 通过，无安全漏洞，代码规范合格
-```
-
-**步骤 5：Primary 自动调用 @test**
-```
-已自动调用测试代理，执行编译测试：
-✅ npm run build 成功
-✅ 接口运行正常，测试用例通过
-```
-
-**步骤 6：交付完成**
-```
-✅ 开发全流程完成
-文件：src/api/login.js
-状态：计划完成→编码完成→审查通过→测试通过
-```
-
-### 6.4 手动调用子代理
-
-你也可以直接指挥总调度，手动触发任意环节：
-
-```text
-@plan 帮我拆解登录模块开发计划
-@code 根据计划编写登录代码
-@review 审查我写的代码
-@test 编译测试项目
-@bugfix 修复接口报错 500 问题
-```
-
-### 6.5 核心优势
-
-1. **全自动化**：用户只需提需求，Primary 自动走完开发全流程
-2. **权限绝对安全**：
-   - 计划/审查：只读，无任何修改风险
-   - 测试：仅允许安全命令，禁止删除/推送
-3. **专业分工**：每个子代理只做一件事，精度更高
-4. **上下文隔离**：子任务不污染主对话，效率更高
-5. **可扩展**：新增文档、部署、数据库等子代理只需加文件
-
----
-
-## 七、最佳实践建议
+## 八、最佳实践建议
 
 1. **安全优先**：涉及关键修改时，先用 Plan Agent 分析评估，再用 Build Agent 执行
 2. **任务拆分**：复杂任务拆分为多个子任务，通过子 Agent 并行处理
@@ -790,7 +1126,7 @@ permission:
 
 ---
 
-## 八、总结
+## 九、总结
 
 OpenCode 内置 Agent 体系通过**专业化分工**和**精细化权限控制**，构建了一个高效、安全的 AI 编程协作环境。核心的 Build/Plan 双主 Agent 分别负责"执行"与"思考"，配合 General/Explore 子 Agent 处理专项任务，形成了完整的开发工作流闭环。
 
