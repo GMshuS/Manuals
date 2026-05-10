@@ -30,11 +30,11 @@
   - [6.2 三种调用方式](#62-三种调用方式)
   - [6.3 多 Agent 流水线编排](#63-多-agent-流水线编排)
 - [七、Skill 调用其他 Skill](#七-skill-调用其他-skill)
-  - [7.1 三种标准调用方式](#71-三种标准调用方式)
-  - [7.2 技能编排器实战](#72-技能编排器实战)
-  - [7.3 必守规则](#73-必守规则)
+  - [6.1 三种标准调用方式](#71-三种标准调用方式)
+  - [6.2 技能编排器实战](#72-技能编排器实战)
+  - [6.3 必守规则](#73-必守规则)
 - [八、实战案例](#八实战案例)
-  - [8.1 全自动多语言编码规范 Skill](#81-全自动多语言编码规范-skill)
+  - [7.1 全自动多语言编码规范 Skill](#81-全自动多语言编码规范-skill)
 - [附录](#附录)
   - [A. 最佳实践](#a-最佳实践)
   - [B. 常见问题排查](#b-常见问题排查)
@@ -519,103 +519,11 @@ scope: project
 
 ---
 
-## 六、Skill 调用 Agent
+## 六、Skill 调用其他 Skill
 
-### 6.1 内置 Agent 清单
+### 6.1 三种标准调用方式
 
-OpenCode 固定可调用 Agent 名称（直接用这些名字调用，不能自定义）：
-
-| Agent 名称 | 核心能力 |
-|------------|----------|
-| `code-agent` | 代码编写、重构、生成、修改（最常用） |
-| `review-agent` | 代码审查、质量检测、漏洞扫描 |
-| `git-agent` | Git 提交、分支、变基、版本管理 |
-| `web-agent` | 网络搜索、API 文档查询 |
-| `explore-agent` | 项目结构探索、依赖分析 |
-| `docker-agent` | 容器构建、镜像优化 |
-| `test-agent` | 单元测试、用例编写 |
-
-### 6.2 三种调用方式
-
-#### 6.2.1 方式 1：正文语义调用（⭐ 最常用、零配置）
-
-直接在 `SKILL.md` 正文里，用**固定指令句式**指派 Agent，AI 会自动识别并加载对应 Agent 执行任务。
-
-**万能调用句式**：
-```markdown
-## 执行指派（核心：调用 Agent）
-1. 将当前任务 **委托给 code-agent 执行**
-2. 代码审查环节 **自动加载 review-agent 完成校验**
-3. 最终提交 **由 git-agent 负责标准化操作**
-```
-
-**极简示例**：
-```markdown
----
-name: code-publish-skill
-description: 代码发布规范，调用审查+Git Agent 自动执行
----
-
-## 强制规则
-1. 所有代码必须通过 review-agent 审查
-2. 提交操作必须由 git-agent 完成
-
-## 执行步骤
-1. 加载 code-agent 编写/修改代码
-2. 委托 review-agent 做代码质量检查
-3. 指派 git-agent 生成规范提交并推送
-```
-
-#### 6.2.2 方式 2：配置文件永久绑定
-
-在项目 `opencode.json` 中，将**自定义 Skill 与 Agent 强绑定**，只要加载该 Skill，系统自动启动对应 Agent。
-
-**配置模板**：
-```json
-{
-  "skills": {
-    "autoLoad": ["code-publish-skill"]
-  },
-  "agents": {
-    // 技能绑定 Agent：skill 名称 → 对应执行 Agent
-    "bindings": {
-      "code-publish-skill": ["review-agent", "git-agent"]
-    }
-  }
-}
-```
-
-#### 6.2.3 方式 3：对话内命令联动（调试专用）
-
-调试时用命令，**手动加载 Skill + 切换 Agent**，快速验证调用效果：
-```bash
-# 1. 加载自定义 Skill
-/use code-publish-skill
-
-# 2. 切换到指定 Agent 执行
-/agent use review-agent
-```
-
-### 6.3 多 Agent 流水线编排
-
-复杂任务可以在 Skill 中设计**Agent 执行流水线**：
-
-```markdown
-## 全流程 Agent 编排
-1. 启动 web-agent 搜索最新技术方案
-2. 交付 code-agent 生成代码
-3. 转交 test-agent 编写单元测试
-4. 提交 review-agent 质量审查
-5. 最后由 git-agent 完成发布
-```
-
----
-
-## 七、Skill 调用其他 Skill
-
-### 7.1 三种标准调用方式
-
-#### 7.1.1 方式 1：正文语义调用（⭐ 首选，零配置，最稳定）
+#### 6.1.1 方式 1：正文语义调用（⭐ 首选，零配置，最稳定）
 
 直接在**主技能的 SKILL.md 正文**中，用**自然语言指令**声明「加载/启用/组合 XX 技能」，AI 会自动识别并加载依赖技能。
 
@@ -647,7 +555,7 @@ tags: ["发布", "自动化"]
 4. 输出完整发布报告
 ```
 
-#### 7.1.2 方式 2：配置文件自动绑定
+#### 6.1.2 方式 2：配置文件自动绑定
 
 在项目 `opencode.json` 中，将**主技能与依赖技能强绑定**，只要加载主技能，系统**自动加载所有子技能**。
 
@@ -666,7 +574,7 @@ tags: ["发布", "自动化"]
 }
 ```
 
-#### 7.1.3 方式 3：对话命令手动调用（调试专用）
+#### 6.1.3 方式 3：对话命令手动调用（调试专用）
 
 在 OpenCode 对话中，直接用命令**同时加载多个技能**，快速验证调用效果：
 ```bash
@@ -682,7 +590,7 @@ tags: ["发布", "自动化"]
 /skill list
 ```
 
-### 7.2 技能编排器实战
+### 6.2 技能编排器实战
 
 **目录结构**：
 ```
@@ -715,7 +623,7 @@ version: 1.0.0
 4. 所有技能必须按顺序执行，不可跳过
 ```
 
-### 7.3 必守规则
+### 6.3 必守规则
 
 1. **必须使用技能的 `name` 调用**
    不能用文件夹名/描述，必须用 YAML 头里的 `name` 字段。
@@ -734,20 +642,20 @@ version: 1.0.0
 
 ---
 
-## 八、实战案例
+## 七、实战案例
 
-### 8.1 全自动多语言编码规范 Skill
+### 7.1 全自动多语言编码规范 Skill
 
 **核心特性**：仅 1 个 Skill 文件、自动判断用户编辑的目标文件/语言、**按需加载对应规范**、无需手动选择、无需拆分多个子 Skill。
 
-#### 8.1.1 核心设计思路
+#### 7.1.1 核心设计思路
 
 1. **单个 Skill 承载所有规范**：`auto-coding-spec`（无需多文件，极简维护）
 2. **自动识别编辑目标**：通过**文件后缀、代码语言、编辑上下文**判断是 Python/Go/Node.js/C++
 3. **精准按需加载**：识别后 **仅启用对应语言的规范**，屏蔽其他语言规则
 4. **零手动操作**：AI 自动完成「识别→匹配→加载规范」全流程
 
-#### 8.1.2 目录结构
+#### 7.1.2 目录结构
 
 ```
 你的项目根目录/
@@ -757,7 +665,7 @@ version: 1.0.0
             └── SKILL.md       # 仅 1 个技能文件（所有规范都在这里）
 ```
 
-#### 8.1.3 完整 Skill 代码
+#### 7.1.3 完整 Skill 代码
 
 ```markdown
 ---
@@ -837,14 +745,14 @@ scope: project
 3. 必须严格遵循识别后的单一语言规范
 ```
 
-#### 8.1.4 核心工作原理
+#### 7.1.4 核心工作原理
 
 1. **你编辑文件时**：AI 读取文件后缀（如 `main.py`）
 2. **Skill 自动判断**：匹配 Python 规范
 3. **按需加载**：**只启用 Python 规则**，忽略 Go/Node.js/C++ 所有内容
 4. **代码约束**：生成的代码 100% 符合 Python 官方规范
 
-#### 8.1.5 使用方式
+#### 7.1.5 使用方式
 
 **全自动使用（推荐）**：
 ```bash
@@ -864,7 +772,7 @@ scope: project
 }
 ```
 
-#### 8.1.6 扩展能力
+#### 7.1.6 扩展能力
 
 直接在 Skill 中**新增模块**即可，无需修改结构：
 ```markdown
@@ -877,31 +785,31 @@ scope: project
 
 ---
 
-## 开源OpenCode Skill全攻略
+## 八、开源OpenCode Skill全攻略
 
-### 一、开源Skill查找渠道（6大权威来源）
+### 8.1 开源Skill查找渠道（6大权威来源）
 
-#### 1. 官方渠道
+#### 方式一：官方渠道
 - **OpenCode官方文档**：https://opencode.ai/docs/skills/
   - 内置基础技能库，包含版本控制、测试生成等核心功能
 - **OpenCode中国站技能库**：https://www.opencodechina.com/skills/
   - 中文友好，分类清晰（开发、办公、创意等）
 
-#### 2. 社区技能市场（推荐）
+#### 方式二：社区技能市场（推荐）
 | 平台 | 特点 | 链接 |
 |------|------|------|
 | **skills.sh** | Vercel官方排行榜，质量高 | https://skills.sh |
 | **skillsmp.com** | 中文社区，6万+技能，分类详细 | https://skillsmp.com/zh |
 | **LobeHub** | 1500+精选技能，支持一键安装 | https://lobehub.com/skills |
 
-#### 3. GitHub搜索（最全面）
+#### 方式三：GitHub搜索（最全面）
 - 搜索关键词：`opencode-skills`、`topic:opencode-skill`、`awesome-opencode-skills`
 - 优质仓库：
   - **kedbin/opencode-skills**：通用开发技能集合
   - **cycleuser/skills**：包含7个专业技能和6个快捷命令
   - **VoltAgent/awesome-agent-skills**：1000+跨平台技能，兼容OpenCode
 
-#### 4. 命令行安装（最便捷）
+#### 方式四：命令行安装（最便捷）
 ```bash
 ## 官方技能安装工具
 npx skills add 技能名称 -y
@@ -911,19 +819,19 @@ npx skills add obra/superpowers -y  ## 2.6万stars，AI编程全流程支持
 npx skills add OthmanAdi/planning-with-files -y  ## 最强外部记忆技能
 ```
 
-#### 5. 手动安装（自定义）
+#### 方式五：手动安装（自定义）
 1. 创建目录：`~/.config/opencode/skills/[技能名]/SKILL.md`（全局）或`.opencode/skills/[技能名]/SKILL.md`（项目）
 2. 复制GitHub上的SKILL.md内容到对应文件
 3. 重启OpenCode生效
 
-#### 6. 社区论坛
+#### 方式六：社区论坛
 - SegmentFault思否OpenCode板块：https://segmentfault.com/t/opencode
 - Reddit r/opencode社区：https://www.reddit.com/r/opencode/
 - 国内AI开发者社群（如飞书/钉钉OpenCode交流群）
 
-### 二、工作必备开源Skill精选（按场景分类）
+### 8.2 工作必备开源Skill精选（按场景分类）
 
-#### 1. 开发类（程序员必备）
+#### 8.2.1 开发类（程序员必备）
 
 | Skill名称 | 核心功能 | 适用场景 | 安装方式 |
 |-----------|----------|----------|----------|
@@ -933,7 +841,7 @@ npx skills add OthmanAdi/planning-with-files -y  ## 最强外部记忆技能
 | **Database Expert** | SQL优化，数据库设计，迁移脚本 | 数据存储、查询性能优化 | `npx skills add database-expert -y` |
 | **Python/Go/C++规范技能** | 自动识别语言，按需加载编码规范 | 多语言项目开发 | 参考之前提供的auto-coding-spec实现 |
 
-#### 2. 办公类（职场通用）
+#### 8.2.2 办公类（职场通用）
 
 | Skill名称 | 核心功能 | 适用场景 | 安装方式 |
 |-----------|----------|----------|----------|
@@ -942,7 +850,7 @@ npx skills add OthmanAdi/planning-with-files -y  ## 最强外部记忆技能
 | **Meeting Minutes** | 会议记录自动生成，任务分配，跟进提醒 | 团队会议、项目管理 | `npx skills add meeting-minutes -y` |
 | **Project Planner** | 项目规划，任务分解，时间线制定 | 项目管理、需求分析 | `npx skills add project-planner -y` |
 
-#### 3. 内容创作类（文案/设计）
+#### 8.2.3 内容创作类（文案/设计）
 
 | Skill名称 | 核心功能 | 适用场景 | 安装方式 |
 |-----------|----------|----------|----------|
@@ -951,26 +859,26 @@ npx skills add OthmanAdi/planning-with-files -y  ## 最强外部记忆技能
 | **UI-UX Pro Max** | 界面设计规范，组件库推荐，响应式布局 | 前端开发、产品设计 | `npx skills add ui-ux-pro-max -y` |
 | **WeChat Article Writer** | 公众号文章创作，配图建议，排版优化 | 内容运营、自媒体 | `npx skills add wechat-article-writer -y` |
 
-### 三、生活实用开源Skill推荐（提升幸福感）
+### 8.3 生活实用开源Skill推荐（提升幸福感）
 
-#### 1. 学习与知识管理
+#### 8.3.1 学习与知识管理
 - **Tapestry（知识网络编织）**：将零散笔记转化为知识图谱，关联知识点
 - **Flashcard Generator**：自动生成记忆卡片，支持Anki导入，适合语言学习
 - **Research Assistant**：学术文献搜索，摘要生成，引用格式转换
 
-#### 2. 日常工具
+#### 8.3.2 日常工具
 - **PDF全能处理**：PDF转Word/Excel，合并/拆分，密码解除
 - **Recipe Finder**：根据冰箱食材推荐食谱，营养分析，烹饪步骤
 - **Travel Planner**：行程规划，景点推荐，交通住宿比价，预算管理
 
-#### 3. 健康管理
+#### 8.3.3 健康管理
 - **Workout Generator**：根据身体状况和目标生成健身计划
 - **Meal Planner**：个性化饮食方案，卡路里计算，食材采购清单
 - **Sleep Tracker**：睡眠数据分析，改善建议，作息调整方案
 
-### 四、使用技巧与最佳实践
+### 8.4 使用技巧与最佳实践
 
-#### 1. 技能管理命令
+#### 8.4.1 技能管理命令
 ```bash
 ## 列出所有已加载技能
 /skill list
@@ -985,18 +893,18 @@ skill_find query="git"
 /skill remove 技能名称
 ```
 
-#### 2. 按需加载原则
+#### 8.4.2 按需加载原则
 - 开发Python项目：只加载`python-coding-spec`和`git-master`，避免冗余
 - 写文档时：加载`docx-word`和`doc-coauthoring`，专注内容创作
 - 多语言项目：使用之前设计的`auto-coding-spec`，自动识别语言
 
-#### 3. 安全与性能建议
+#### 8.4.3 安全与性能建议
 - 优先选择GitHub高星、社区活跃的技能，避免恶意代码
 - 定期更新技能，保持功能最新
 - 不常用的技能及时卸载，减少内存占用
 
 
-### 五、总结
+### 8.5 总结
 开源OpenCode Skill资源丰富，从官方渠道、社区市场到GitHub都能找到高质量技能。工作中优先使用开发、办公类技能提升效率，生活中用学习、工具类技能改善体验。记住**按需加载**原则，让AI助手专注于当前任务，发挥最大价值。
 
 ---
