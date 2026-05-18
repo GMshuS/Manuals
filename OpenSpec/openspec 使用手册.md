@@ -397,6 +397,7 @@ OpenSpec 的命令分为 **两层体系**：
 ```
 /opsx:propose <需求描述>
 /opsx:apply
+/opsx:sync # 可选步骤，opsx:archive时会提示进行sync
 /opsx:archive
 ```
 
@@ -430,6 +431,7 @@ OpenSpec 的命令分为 **两层体系**：
 /opsx:explore
 /opsx:propose <change>
 /opsx:apply
+/opsx:sync # 可选步骤，opsx:archive时会提示进行sync
 /opsx:archive
 ```
 
@@ -454,6 +456,7 @@ OpenSpec 的命令分为 **两层体系**：
 openspec config profile
 openspec update
 
+# 用到的命令
 /opsx:new <change>
 /opsx:continue  # 或 /opsx:ff
 /opsx:apply
@@ -563,6 +566,7 @@ openspec init
 ```
 
 **proposal.md 示例**：
+
 ```markdown
 # Proposal: Fix Cache Not Cleared on Logout
 
@@ -675,29 +679,7 @@ your-project/
 
 #### `openspec/config.yaml` — 项目配置
 
-```yaml
-schema: spec-driven
-
-context: |
-  技术栈：TypeScript、React 18、Node.js、PostgreSQL
-  API 风格：RESTful
-  测试框架：Vitest
-  代码规范：参考 .eslintrc.js
-
-rules:
-  proposal:
-    - 必须包含回滚方案
-    - 标注影响的模块范围
-  specs:
-    - 使用 Given/When/Then 格式描述测试场景
-  design:
-    - 必须说明技术选型理由
-  tasks:
-    - 每个任务必须可独立验证
-```
-
-- `context`：注入到所有工件生成过程中，相当于项目的"全局上下文"
-- `rules`：针对特定工件类型的约束，AI 生成对应工件时必须遵守
+具体配置参考 **[配置项目上下文（强烈推荐）](#24-配置项目上下文强烈推荐)**
 
 #### `.openspec.yaml` — 变更元数据（可选）
 
