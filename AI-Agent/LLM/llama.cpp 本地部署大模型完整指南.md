@@ -549,7 +549,7 @@ Windows 预编译包解压后，核心功能文件如下：
   - 模型列表：`GET http://localhost:8080/v1/models`
   - 嵌入生成：`POST http://localhost:8080/v1/embeddings`
 
-**Python 调用示例**：
+**在Python调用API**
 
 ```python
 from openai import OpenAI
@@ -569,6 +569,52 @@ response = client.chat.completions.create(
 )
 
 print(response.choices[0].message.content)
+```
+
+**在OpenCode中配置API**
+
+```json
+{
+    "$schema": "https://opencode.ai/config.json",
+    "llama.cpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama.cpp-local",
+      "options": {
+        "baseURL": "http://127.0.0.1:8880/v1",
+        "toolParser": [
+          {"type":"raw-function-call"},
+          {"type":"json"}
+        ]
+      },
+      "models": {
+        "DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M.gguf": {
+          "name": "DeepSeek-Coder-V2-Lite-Instruct-Q4_K_M",
+          "tool_call": true,
+          "limit": {
+          "context": 32768,
+          "output": 8192
+          }
+        },
+        "Qwen3.5-9B-Q4_K_M.gguf": {
+          "name": "Qwen3.5-9B-Q4_K_M",
+          "tool_call": true,
+          "limit": {
+          "context": 32768,
+          "output": 8192
+          }
+        },
+        "Qwen3-14B-Q4_K_M.gguf": {
+          "name": "Qwen3-14B-Q4_K_M",
+          "tool_call": true,
+          "limit": {
+          "context": 32768,
+          "output": 8192
+          }
+        }
+      }
+    },
+    "model": "llama.cpp/Qwen3.5-9B-Q4_K_M.gguf"
+}
 ```
 
 ### 4. GGUF 模型处理（llama-gguf）
