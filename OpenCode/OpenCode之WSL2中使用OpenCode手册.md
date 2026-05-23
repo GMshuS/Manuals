@@ -137,6 +137,19 @@ wsl --list --verbose
 * Ubuntu    Running         2
 ```
 
+### 前置准备：更新系统 + 安装基础依赖
+
+打开 WSL2 终端（Ubuntu），先执行这一步，所有开发环境的基础：
+
+```bash
+运行
+# 更新软件源（必做）
+sudo apt update -y
+# 升级系统软件
+sudo apt upgrade -y
+# 安装编译工具、网络工具、编辑器等通用依赖
+sudo apt install -y build-essential curl wget git vim unzip net-tools
+```
 
 ### 进阶配置
 
@@ -506,6 +519,73 @@ opencode web --hostname 0.0.0.0
 ```
 
 然后在 Windows 浏览器访问输出的 `http://localhost:<port>` 地址
+
+### 切换工作目录
+
+#### 方式 1：「打开文件夹」对话框（最常用）
+
+快捷键：`Ctrl + K` 然后 `Ctrl + O`（或菜单栏 文件 → 打开文件夹）
+
+此时弹出的文件浏览器是 WSL2 内部的 Linux 文件系统，你可以直接选择：
+- WSL2 内部路径，如 `/home/用户名/项目A`
+- Windows 磁盘挂载路径，如 `/mnt/c/Users/用户名/Projects/项目B`
+
+点击「确定」后，VS Code 会重新加载窗口并切换到该目录。
+
+#### 方式 2：命令面板快速切换
+
+快捷键：`Ctrl + Shift + P`，然后输入：
+```
+Remote-WSL: Open Folder in WSL
+```
+或中文界面下：
+```
+Remote-WSL: 在 WSL 中打开文件夹
+```
+这会直接弹出 WSL2 文件选择对话框，无需先断开连接。
+
+#### 方式 3：终端内用 `code` 命令打开新窗口
+
+在 VS Code 的集成终端（已处于 WSL2 环境）中执行：
+
+```bash
+# 打开新窗口
+code /path/to/another-project
+# 或打开当前目录（另起新窗口）
+cd ~/另一个项目
+code .
+```
+
+> 若不想新开窗口，而是替换当前窗口，加 `-r` 参数：
+
+```bash
+> code -r .
+```
+
+
+#### 方式 4：添加到工作区（多目录并行）
+
+如果你需要同时操作多个目录，不必频繁切换：
+文件 → 将文件夹添加到工作区（`Ctrl + K` 然后 `Ctrl + A`）
+这样左侧资源管理器会显示多个根目录，适合微服务或多模块项目。
+
+#### 方式 5：资源管理器地址栏直接跳转
+
+点击左侧资源管理器顶部的面包屑路径（当前文件夹名），可以直接输入绝对路径跳转，例如：
+```
+/home/你的用户名/Projects/demo
+```
+按回车即可加载该目录。
+
+#### 补充：如何确认当前处于 WSL2 环境？
+
+看 VS Code 左下角状态栏，应显示：
+
+```
+>< WSL: Ubuntu
+```
+
+如果显示的是普通的本地路径（如 `C:\Users\...`），说明当前窗口还在 Windows 本地，需要先点击左下角 `><` 图标 → 连接到 WSL。
 
 ### 配置迁移（从 Windows 到 WSL2）
 
