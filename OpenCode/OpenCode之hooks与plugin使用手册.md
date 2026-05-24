@@ -135,48 +135,7 @@ export async function trigger<Name extends keyof Hooks>(name: Name, input, outpu
 - `input`：只读上下文
 - `output`：可修改的结果对象，插件通过直接修改来注入行为
 
-### 2.4 核心 Hooks 总览
-
-OpenCode 官方提供的标准 Hooks：
-
-| Hook | 触发时机 | 能力 | 典型用途 |
-|------|----------|------|----------|
-| `config` | 初始化时 | 修改运行时配置 | 注入自定义配置项 |
-| `tool` | 系统启动时 | 注册新工具 | 添加自定义工具供 LLM 调用 |
-| `event` | 任何总线事件 | 监听全局事件流 | 监听文件变更、会话状态 |
-| `chat.message` | 收到用户消息时 | 拦截/修改消息 | 关键词检测、首消息处理 |
-| `chat.params` | 发送给 LLM 前 | 调整模型参数 | 修改 temperature、模型选择 |
-| `chat.headers` | 发送 HTTP 请求前 | 注入请求头 | 添加认证头 |
-| `tool.execute.before` | 工具执行前 | 可阻止执行 | 权限检查、安全验证 |
-| `tool.execute.after` | 工具执行后 | 修改输出 | 日志记录、输出截断 |
-
-**实验性 Hooks**：
-
-| Hook | 能力 |
-|------|------|
-| `experimental.chat.messages.transform` | 修改发送给 LLM 的消息列表 |
-| `experimental.chat.system.transform` | 修改系统提示词（System Prompt） |
-| `experimental.session.compacting` | 自定义会话压缩行为 |
-| `permission.ask` | 自动批准或拒绝权限请求 |
-| `experimental.text.complete` | 生成后文本处理 |
-| `command.execute.before` | 命令执行前拦截 |
-| `shell.env` | Shell 环境变量注入 |
-| `tool.definition` | 工具描述修改 |
-| `auth` | 自定义认证提供者 |
-
-**可用事件类型**：
-
-插件的 `event` 钩子可以订阅以下事件：
-
-- **文件事件**：`file.edited`, `file.watcher.updated`
-- **会话事件**：`session.created`, `session.compacted`, `session.idle`, `session.deleted`
-- **消息事件**：`message.updated`, `message.removed`, `message.part.updated`
-- **工具事件**：`tool.execute.before`, `tool.execute.after`
-- **权限事件**：`permission.replied`, `permission.updated`
-- **LSP 事件**：`lsp.client.diagnostics`, `lsp.updated`
-- **命令事件**：`command.executed`
-
-### 2.5 配置钩子（上层）
+### 2.4 配置钩子（上层）
 
 面向不写代码的用户，通过 `opencode.jsonc` 配置。
 
@@ -228,23 +187,39 @@ OpenCode 官方提供的标准 Hooks：
 
 ### 3.1 安装插件
 
-**配置钩子（JSON/JSONC）**：
+#### 3.1.1 配置钩子（JSON/JSONC）：
 
 在 `opencode.jsonc` 的 `experimental.hook` 节点中配置。
 
-**插件钩子（TS/JS 模块）**：
+#### 3.1.2 插件钩子（TS/JS 模块）：
 
-插件是一个导出函数的模块，接收上下文对象，返回钩子对象。
+**从本地文件加载**
 
-加载路径优先级：
-1. 项目级：`.opencode/plugins/` 或 `.opencode/plugin/`
-2. 全局级：`~/.config/opencode/plugins/` 或 `~/.config/opencode/plugin/`
-3. npm 包：在 `opencode.json` 的 `plugin` 数组中声明
+将 JavaScript 或 TypeScript 文件放置在插件目录中。
 
-**启用插件**：
+```
+.opencode/plugins/ - 项目级插件
+~/.config/opencode/plugins/ - 全局插件
+```
 
-```jsonc
+这些目录中的文件会在启动时自动加载。本地插件可使用外部 npm 包。在配置目录（`.opencode/` 或 `~/.config/opencode/`）添加 `package.json`，OpenCode 启动时会自动运行 `bun install`。
+
+package.json示例：
+
+```json
 {
+  "dependencies": {
+    "shescape": "^2.1.0"
+  }
+}
+```
+
+**从 npm 加载**
+在opencode.json配置文件中指定 npm 包。
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
   "plugin": [
     // 放在标准插件目录 `.opencode/plugins` 下
     "MyPlugin.js",
@@ -256,9 +231,12 @@ OpenCode 官方提供的标准 Hooks：
 }
 ```
 
-**依赖管理**：
+支持常规和带作用域的 npm 包。npm 插件在启动时使用 Bun 自动安装。包及其依赖项会缓存在 ~/.cache/opencode/node_modules/ 中。  
 
-本地插件可使用外部 npm 包。在配置目录（`.opencode/` 或 `~/.config/opencode/`）添加 `package.json`，OpenCode 启动时会自动运行 `bun install`。
+**加载路径优先级**
+1. 项目级：`.opencode/plugins/` 或 `.opencode/plugin/`
+2. 全局级：`~/.config/opencode/plugins/` 或 `~/.config/opencode/plugin/`
+3. npm 包：在 `opencode.jsonc` 的 `plugin` 数组中声明
 
 ### 3.2 查看已安装插件
 
@@ -345,6 +323,401 @@ rm ~/.config/opencode/plugins/my-plugin.ts
 | 缓存清理后插件自动恢复 | 配置中仍保留该插件 | 检查 `opencode.json` 是否已删除条目 |
 | 本地插件删除后报错 | 其他配置引用该插件 | 检查 `plugin` 数组中是否有 `file://` 路径指向已删除文件 |
 | 全局与项目插件冲突 | 同名插件在不同层级 | 同时检查 `~/.config/opencode/` 和 `./opencode.json` |
+
+---
+
+## 五、Plugin 开发与调试
+
+### 5.1 基础结构
+
+插件是一个导出 `Plugin` 函数的 JS/TS 模块，接收上下文对象，返回 hooks 对象：
+
+```typescript
+import { Plugin, tool } from '@opencode-ai/plugin'
+
+export const MyPlugin: Plugin = async ({ project, client, $, directory, worktree }) => {
+  console.log("Plugin initialized!")
+  return {
+    // Hook 实现
+  }
+}
+```
+
+**上下文对象 (ctx) 包含**：
+- `project`：项目信息（id、worktree、vcs）
+- `directory`：当前工作目录
+- `worktree`：Git 工作区根目录
+- `client`：OpenCode SDK 客户端（连接 localhost:4096）
+- `$`：Bun Shell API，用于执行命令
+
+### 5.2 核心 Hook 类型速查
+
+OpenCode 官方提供的可以订阅事件，如下方示例部分所示。以下是所有可用事件的列表。
+
+| 事件分类 | 事件名称 | 事件说明 |
+| ---- | ---- | ---- |
+| 命令事件 | command.executed | 命令执行完成时触发 |
+| 文件事件 | file.edited | 文件内容被编辑修改时触发 |
+| 文件事件 | file.watcher.updated | 文件监控检测到文件变动时触发 |
+| 安装事件 | installation.updated | 插件/程序安装状态发生变更时触发 |
+| LSP事件 | lsp.client.diagnostics | LSP客户端诊断信息更新推送 |
+| LSP事件 | lsp.updated | LSP服务配置、状态发生变动时触发 |
+| 消息事件 | message.part.removed | 单条消息片段被移除 |
+| 消息事件 | message.part.updated | 单条消息片段内容更新 |
+| 消息事件 | message.removed | 整条消息被删除 |
+| 消息事件 | message.updated | 整条消息内容发生修改 |
+| 权限事件 | permission.asked | 发起权限申请请求 |
+| 权限事件 | permission.replied | 权限申请收到回复结果 |
+| 服务器事件 | server.connected | 成功连接服务端 |
+| 会话事件 | session.created | 新建会话实例 |
+| 会话事件 | session.compacted | 会话数据压缩整理完成 |
+| 会话事件 | session.deleted | 会话被删除销毁 |
+| 会话事件 | session.diff | 会话内容产生差异变更 |
+| 会话事件 | session.error | 会话运行出现异常报错 |
+| 会话事件 | session.idle | 会话进入空闲静置状态 |
+| 会话事件 | session.status | 会话运行状态发生切换 |
+| 会话事件 | session.updated | 会话整体信息更新 |
+| 待办事项事件 | todo.updated | 待办任务新增、修改、状态变更 |
+| Shell事件 | shell.env | 终端环境变量发生变动 |
+| 工具事件 | tool.execute.after | 工具执行结束后触发 |
+| 工具事件 | tool.execute.before | 工具执行开始前触发 |
+| TUI事件 | tui.prompt.append | 终端交互提示符追加内容 |
+| TUI事件 | tui.command.execute | 界面指令执行动作触发 |
+| TUI事件 | tui.toast.show | 弹窗提示消息弹出展示 |
+
+### 5.4 完整开发实例
+
+#### 5.4.1 项目搭建
+
+环境准备：OpenCode 插件基于 Bun 运行时，开发前确保已安装 `bun` 和 `opencode` CLI。
+
+```bash
+# 创建插件包
+mkdir my-opencode-plugin && cd my-opencode-plugin
+bun init
+```
+
+安装依赖：
+```bash
+bun add @opencode-ai/plugin @opencode-ai/sdk zod
+bun add -d @types/node typescript
+```
+
+`package.json` 核心依赖：
+```json
+{
+  "dependencies": {
+    "@opencode-ai/plugin": "latest",
+    "@opencode-ai/sdk": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}
+```
+
+TypeScript 配置：
+```json
+{
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "preserve",
+    "declaration": true,
+    "moduleResolution": "bundler"
+  },
+  "include": ["src"]
+}
+```
+
+三种加载方式：
+
+| 方式 | 路径 | 适用场景 |
+|------|------|----------|
+| 项目级 | `./.opencode/plugin/my-plugin.ts` | 仅当前项目使用，无需发布 |
+| 全局级 | `~/.config/opencode/plugin/my-plugin.ts` | 个人跨项目使用 |
+| npm 包 | `opencode.json` 中配置 `"plugin": ["my-plugin"]` | 团队共享或公开发布 |
+
+本地开发推荐：项目级或全局级直接放 `.ts` 源文件，OpenCode 会自动用 Bun 执行，无需手动编译。
+
+如需打包（用于发布或复杂依赖）：
+```bash
+bun build src/index.ts --outdir dist --target bun --format esm
+```
+
+#### 5.4.2 实例 1：最小可用插件（Hello Tool）
+
+`src/index.ts`：
+```typescript
+import { Plugin, tool } from '@opencode-ai/plugin'
+
+export default (async (ctx) => {
+  return {
+    tool: {
+      hello: tool({
+        description: 'Say hello to someone',
+        args: {
+          name: tool.schema.string().describe('Name to greet'),
+        },
+        async execute({ name }) {
+          return `Hello, ${name}!`
+        },
+      }),
+    },
+  }
+}) satisfies Plugin
+```
+
+将文件保存到 `.opencode/plugin/hello.ts`，重启 OpenCode 后，Agent 就能调用 `hello` 工具。
+
+#### 5.4.3 实例 2：带 Hooks 的综合插件
+
+以下插件同时演示了工具注册、权限拦截、消息预处理、系统提示词注入四种能力：
+
+```typescript
+import { Plugin, tool } from '@opencode-ai/plugin'
+
+export default (async ({ client, $, project, directory }) => {
+  const startTime = Date.now()
+
+  return {
+    // 1. 注册自定义工具
+    tool: {
+      gitStatus: tool({
+        description: 'Get git status in one line',
+        args: {},
+        async execute() {
+          const result = await $`git status --porcelain`
+          return result.text() || "Working tree clean"
+        },
+      }),
+
+      notify: tool({
+        description: 'Send a notification to the user without expecting reply',
+        args: {
+          text: tool.schema.string().describe('Notification text'),
+        },
+        async execute({ text }, toolCtx) {
+          await client.session.prompt({
+            path: { id: toolCtx.sessionID },
+            body: {
+              noReply: true,
+              parts: [{ type: 'text', text }],
+            },
+          })
+          return "Notified"
+        },
+      }),
+    },
+
+    // 2. 权限自动批准
+    'permission.ask': async (permission, output) => {
+      if (permission.type === 'read_file' && permission.target?.endsWith('.md')) {
+        output.status = 'allow'
+      }
+    },
+
+    // 3. 工具执行前拦截（安全策略）
+    'tool.execute.before': async ({ tool, sessionID }, { args, abort }) => {
+      if (tool === 'Read' && args.filePath?.includes('.env')) {
+        abort = 'Security policy: .env files are blocked'
+      }
+      if (tool === 'bash') {
+        console.log(`[${sessionID}] bash: ${args.command}`)
+      }
+    },
+
+    // 4. 工具执行后处理
+    'tool.execute.after': async ({ tool }, output) => {
+      if (tool === 'edit' && output.args?.filePath?.endsWith('.ts')) {
+        await $`prettier --write ${output.args.filePath}`
+      }
+    },
+
+    // 5. 系统提示词注入
+    'experimental.chat.system.transform': async (input, output) => {
+      output.system.push(`<<plugin-context>
+        Project: ${project.name}
+        Directory: ${directory}
+        Plugin uptime: ${(Date.now() - startTime) / 1000}s
+      </plugin-context>`)
+    },
+
+    // 6. 事件监听
+    event: async ({ event }) => {
+      if (event.type === 'session.created') {
+        console.log('New session started')
+      }
+    },
+  }
+}) satisfies Plugin
+```
+
+#### 5.4.4 实例 3：配置型插件（Config Hook）
+
+通过 `config` Hook 以编程方式注入命令和 Agent：
+
+```typescript
+export default (async (ctx) => {
+  return {
+    config: async (config) => {
+      config.command = config.command || {}
+      config.command["deploy"] = {
+        template: "Run deployment script for $ARGUMENTS",
+        description: "Deploy to production",
+      }
+
+      config.agent = config.agent || {}
+      config.agent["security-auditor"] = {
+        model: "claude-sonnet-4",
+        systemPrompt: "You are a security auditor. Review all code for vulnerabilities.",
+      }
+    },
+  }
+}) satisfies Plugin
+```
+
+#### 5.4.5 实例 4：会话压缩控制（Memory 插件模式）
+
+```typescript
+'experimental.session.compacting': async (input, output) => {
+  const coreMemories = await recallCoreMemories(input.sessionID)
+
+  output.context.push(`<<critical-memory>
+    ${coreMemories.join('\n')}
+  </critical-memory>`)
+}
+```
+
+### 5.5 构建与部署
+
+**构建**：
+```bash
+bun run build
+```
+
+**本地测试（文件路径）**：
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["file:///absolute/path/to/opencode-my-plugin/dist/index.js"]
+}
+```
+
+**本地测试（bun link）**：
+```bash
+# 在插件目录
+bun link
+
+# 在测试项目目录
+bun link opencode-my-plugin
+```
+
+**发布到 npm**：
+```bash
+npm login
+npm publish --access public
+```
+
+发布后使用：
+```json
+{
+  "plugin": ["opencode-my-plugin@1.0.0"]
+}
+```
+
+### 5.6 目录结构
+
+```
+opencode-my-plugin/
+├── src/
+│   └── index.ts          # 主入口
+├── dist/                 # 编译输出
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+### 5.7 调试技巧
+
+#### 5.7.1 文件日志调试（最常用）
+
+```typescript
+import { writeFileSync } from 'fs'
+
+function fileLog(msg: string, tag = 'plugin') {
+  const line = `[${new Date().toISOString()}][${tag}] ${msg}\n`
+  writeFileSync('/tmp/opencode-debug.log', line, { flag: 'a' })
+}
+
+// 在 Hook 中使用
+'chat.message': async (input, output) => {
+  fileLog(`DEBUG: input = ${JSON.stringify(input)}`, 'debug')
+  fileLog(`DEBUG: output = ${JSON.stringify(output)}`, 'debug')
+}
+```
+
+查看日志：
+```bash
+# 实时跟踪
+tail -f /tmp/opencode-debug.log
+
+# 过滤自己的调试信息
+cat /tmp/opencode-debug.log | grep DEBUG
+```
+
+#### 5.7.2 插件重载机制
+
+| 场景 | 行为 |
+|------|------|
+| 每次启动新会话 | 重新加载插件 |
+| 修改 `.ts` 源文件 | 不会自动热重载，需重启 OpenCode |
+| 使用 npm 包 | 首次自动 `bun install`，后续需手动更新 |
+
+开发循环：
+1. 编辑插件文件
+2. `Ctrl+C` 退出 OpenCode
+3. 重新启动 `opencode`
+4. 检查 `/tmp` 日志
+
+#### 5.7.3 使用 Debug Agent 插件（高级调试）
+
+社区提供了 `opencode-debug-agent` 插件，专门用于运行时调试：
+
+```json
+{
+  "plugin": ["opencode-debug-agent"]
+}
+```
+
+功能：
+- 启动 HTTP 服务器捕获执行数据
+- 提供 `debug_start`, `debug_read`, `debug_stop` 等工具
+- 自动在代码中插入 `fetch()` 埋点，捕获运行时的 input/output 数据
+
+#### 5.7.4 本地开发 Starter 模板
+
+```bash
+git clone https://github.com/darrenhinde/OpenCode-plugin-starter.git
+cd OpenCode-plugin-starter
+bun install
+bun run build:plugin   # 打包到 dist/
+```
+
+该模板包含：
+- 完整的 `my-little-ui` 示例插件（工具 + Hooks + Agent）
+- `context/` 目录：给 LLM 的插件开发知识库
+- 根目录 `config.json`：配置 OpenCode 加载本地插件
+- `package.json` 中使用 `"my-little-ui": "file:./my-little-ui"` 本地引用
+
+### 5.8 插件开发最佳实践
+
+1. **避免重复初始化**：使用 `seen` 集合防止同一函数被多次注册（当模块同时导出命名导出和默认导出时）
+2. **热重载注意**：目前 OpenCode 的插件系统正在完善热重载机制，上游正在添加 `skill.list` / `skill.load` 等钩子以支持单缓存、单失效点
+3. **内部 Hooks 分层**：如果 OpenCode 的原生钩子粒度不够，可以在插件内部再实现更细粒度的钩子系统（如 oh-my-opencode 内部实现了 46 个自己的 Hooks）
+4. **善用 `subscribeAll`**：通过 `event` 钩子 + `subscribeAll` 桥接，可以监听所有事件而不需要逐个订阅
 
 ---
 
@@ -723,390 +1096,6 @@ event: async ({ event }) => {
 | 同步处理 | 阻塞事件循环 | 使用 `async` 并在必要时 `await` |
 | 未检查事件类型 | `event` Hook 收到所有事件 | 使用 `if (event.type === "...")` 过滤 |
 | 使用 `process.cwd()` | 不可靠 | 使用 `ctx.directory` 或 `ctx.worktree` |
-
----
-
-## 五、Plugin 开发与调试
-
-### 5.1 基础结构
-
-插件是一个导出 `Plugin` 函数的 JS/TS 模块，接收上下文对象，返回 hooks 对象：
-
-```typescript
-import { Plugin, tool } from '@opencode-ai/plugin'
-
-export const MyPlugin: Plugin = async ({ project, client, $, directory, worktree }) => {
-  console.log("Plugin initialized!")
-  return {
-    // Hook 实现
-  }
-}
-```
-
-**上下文对象 (ctx) 包含**：
-- `project`：项目信息（id、worktree、vcs）
-- `directory`：当前工作目录
-- `worktree`：Git 工作区根目录
-- `client`：OpenCode SDK 客户端（连接 localhost:4096）
-- `$`：Bun Shell API，用于执行命令
-
-### 5.2 核心 Hook 类型速查
-
-| Hook | 用途 | 示例场景 |
-|------|------|----------|
-| `tool` | 注册自定义工具 | 添加 API 调用、文件操作工具 |
-| `event` | 监听系统事件 | 会话完成通知、文件变更监听 |
-| `tool.execute.before` | 拦截工具执行前 | 参数修改、权限检查 |
-| `tool.execute.after` | 拦截工具执行后 | 结果处理、日志记录 |
-| `permission.ask` | 控制权限请求 | 自动允许/拒绝特定操作 |
-| `config` | 修改 OpenCode 配置 | 注入自定义配置项 |
-| `chat.message` | 拦截聊天消息 | 消息预处理 |
-| `chat.params` | 修改 LLM 参数 | 调整 temperature、topP |
-| `shell.env` | 注入环境变量 | 统一设置 API Key |
-| `experimental.session.compacting` | 自定义上下文压缩 | 保留关键状态 |
-
-### 5.3 事件监听完整列表
-
-- **会话事件**：`session.created`、`session.updated`、`session.idle`、`session.error`、`session.deleted`、`session.compacted`、`session.diff`、`session.status`
-- **消息事件**：`message.updated`、`message.removed`、`message.part.updated`、`message.part.removed`
-- **文件事件**：`file.edited`、`file.watcher.updated`
-- **权限事件**：`permission.asked`、`permission.replied`
-- **TUI 事件**：`tui.prompt.append`、`tui.command.execute`、`tui.toast.show`
-- **其他**：`command.executed`、`lsp.client.diagnostics`、`lsp.updated`、`installation.updated`、`server.connected`
-
-### 5.4 完整开发实例
-
-#### 5.4.1 项目搭建
-
-环境准备：OpenCode 插件基于 Bun 运行时，开发前确保已安装 `bun` 和 `opencode` CLI。
-
-```bash
-# 创建插件包
-mkdir my-opencode-plugin && cd my-opencode-plugin
-bun init
-```
-
-安装依赖：
-```bash
-bun add @opencode-ai/plugin @opencode-ai/sdk zod
-bun add -d @types/node typescript
-```
-
-`package.json` 核心依赖：
-```json
-{
-  "dependencies": {
-    "@opencode-ai/plugin": "latest",
-    "@opencode-ai/sdk": "latest",
-    "zod": "latest"
-  },
-  "devDependencies": {
-    "@types/node": "latest",
-    "typescript": "latest"
-  }
-}
-```
-
-TypeScript 配置：
-```json
-{
-  "extends": "@tsconfig/node22/tsconfig.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "module": "preserve",
-    "declaration": true,
-    "moduleResolution": "bundler"
-  },
-  "include": ["src"]
-}
-```
-
-三种加载方式：
-
-| 方式 | 路径 | 适用场景 |
-|------|------|----------|
-| 项目级 | `./.opencode/plugin/my-plugin.ts` | 仅当前项目使用，无需发布 |
-| 全局级 | `~/.config/opencode/plugin/my-plugin.ts` | 个人跨项目使用 |
-| npm 包 | `opencode.json` 中配置 `"plugin": ["my-plugin"]` | 团队共享或公开发布 |
-
-本地开发推荐：项目级或全局级直接放 `.ts` 源文件，OpenCode 会自动用 Bun 执行，无需手动编译。
-
-如需打包（用于发布或复杂依赖）：
-```bash
-bun build src/index.ts --outdir dist --target bun --format esm
-```
-
-#### 5.4.2 实例 1：最小可用插件（Hello Tool）
-
-`src/index.ts`：
-```typescript
-import { Plugin, tool } from '@opencode-ai/plugin'
-
-export default (async (ctx) => {
-  return {
-    tool: {
-      hello: tool({
-        description: 'Say hello to someone',
-        args: {
-          name: tool.schema.string().describe('Name to greet'),
-        },
-        async execute({ name }) {
-          return `Hello, ${name}!`
-        },
-      }),
-    },
-  }
-}) satisfies Plugin
-```
-
-将文件保存到 `.opencode/plugin/hello.ts`，重启 OpenCode 后，Agent 就能调用 `hello` 工具。
-
-#### 5.4.3 实例 2：带 Hooks 的综合插件
-
-以下插件同时演示了工具注册、权限拦截、消息预处理、系统提示词注入四种能力：
-
-```typescript
-import { Plugin, tool } from '@opencode-ai/plugin'
-
-export default (async ({ client, $, project, directory }) => {
-  const startTime = Date.now()
-
-  return {
-    // 1. 注册自定义工具
-    tool: {
-      gitStatus: tool({
-        description: 'Get git status in one line',
-        args: {},
-        async execute() {
-          const result = await $`git status --porcelain`
-          return result.text() || "Working tree clean"
-        },
-      }),
-
-      notify: tool({
-        description: 'Send a notification to the user without expecting reply',
-        args: {
-          text: tool.schema.string().describe('Notification text'),
-        },
-        async execute({ text }, toolCtx) {
-          await client.session.prompt({
-            path: { id: toolCtx.sessionID },
-            body: {
-              noReply: true,
-              parts: [{ type: 'text', text }],
-            },
-          })
-          return "Notified"
-        },
-      }),
-    },
-
-    // 2. 权限自动批准
-    'permission.ask': async (permission, output) => {
-      if (permission.type === 'read_file' && permission.target?.endsWith('.md')) {
-        output.status = 'allow'
-      }
-    },
-
-    // 3. 工具执行前拦截（安全策略）
-    'tool.execute.before': async ({ tool, sessionID }, { args, abort }) => {
-      if (tool === 'Read' && args.filePath?.includes('.env')) {
-        abort = 'Security policy: .env files are blocked'
-      }
-      if (tool === 'bash') {
-        console.log(`[${sessionID}] bash: ${args.command}`)
-      }
-    },
-
-    // 4. 工具执行后处理
-    'tool.execute.after': async ({ tool }, output) => {
-      if (tool === 'edit' && output.args?.filePath?.endsWith('.ts')) {
-        await $`prettier --write ${output.args.filePath}`
-      }
-    },
-
-    // 5. 系统提示词注入
-    'experimental.chat.system.transform': async (input, output) => {
-      output.system.push(`<<plugin-context>
-        Project: ${project.name}
-        Directory: ${directory}
-        Plugin uptime: ${(Date.now() - startTime) / 1000}s
-      </plugin-context>`)
-    },
-
-    // 6. 事件监听
-    event: async ({ event }) => {
-      if (event.type === 'session.created') {
-        console.log('New session started')
-      }
-    },
-  }
-}) satisfies Plugin
-```
-
-#### 5.4.4 实例 3：配置型插件（Config Hook）
-
-通过 `config` Hook 以编程方式注入命令和 Agent：
-
-```typescript
-export default (async (ctx) => {
-  return {
-    config: async (config) => {
-      config.command = config.command || {}
-      config.command["deploy"] = {
-        template: "Run deployment script for $ARGUMENTS",
-        description: "Deploy to production",
-      }
-
-      config.agent = config.agent || {}
-      config.agent["security-auditor"] = {
-        model: "claude-sonnet-4",
-        systemPrompt: "You are a security auditor. Review all code for vulnerabilities.",
-      }
-    },
-  }
-}) satisfies Plugin
-```
-
-#### 5.4.5 实例 4：会话压缩控制（Memory 插件模式）
-
-```typescript
-'experimental.session.compacting': async (input, output) => {
-  const coreMemories = await recallCoreMemories(input.sessionID)
-
-  output.context.push(`<<critical-memory>
-    ${coreMemories.join('\n')}
-  </critical-memory>`)
-}
-```
-
-### 5.5 构建与部署
-
-**构建**：
-```bash
-bun run build
-```
-
-**本地测试（文件路径）**：
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["file:///absolute/path/to/opencode-my-plugin/dist/index.js"]
-}
-```
-
-**本地测试（bun link）**：
-```bash
-# 在插件目录
-bun link
-
-# 在测试项目目录
-bun link opencode-my-plugin
-```
-
-**发布到 npm**：
-```bash
-npm login
-npm publish --access public
-```
-
-发布后使用：
-```json
-{
-  "plugin": ["opencode-my-plugin@1.0.0"]
-}
-```
-
-### 5.6 目录结构
-
-```
-opencode-my-plugin/
-├── src/
-│   └── index.ts          # 主入口
-├── dist/                 # 编译输出
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-### 5.7 调试技巧
-
-#### 5.7.1 文件日志调试（最常用）
-
-```typescript
-import { writeFileSync } from 'fs'
-
-function fileLog(msg: string, tag = 'plugin') {
-  const line = `[${new Date().toISOString()}][${tag}] ${msg}\n`
-  writeFileSync('/tmp/opencode-debug.log', line, { flag: 'a' })
-}
-
-// 在 Hook 中使用
-'chat.message': async (input, output) => {
-  fileLog(`DEBUG: input = ${JSON.stringify(input)}`, 'debug')
-  fileLog(`DEBUG: output = ${JSON.stringify(output)}`, 'debug')
-}
-```
-
-查看日志：
-```bash
-# 实时跟踪
-tail -f /tmp/opencode-debug.log
-
-# 过滤自己的调试信息
-cat /tmp/opencode-debug.log | grep DEBUG
-```
-
-#### 5.7.2 插件重载机制
-
-| 场景 | 行为 |
-|------|------|
-| 每次启动新会话 | 重新加载插件 |
-| 修改 `.ts` 源文件 | 不会自动热重载，需重启 OpenCode |
-| 使用 npm 包 | 首次自动 `bun install`，后续需手动更新 |
-
-开发循环：
-1. 编辑插件文件
-2. `Ctrl+C` 退出 OpenCode
-3. 重新启动 `opencode`
-4. 检查 `/tmp` 日志
-
-#### 5.7.3 使用 Debug Agent 插件（高级调试）
-
-社区提供了 `opencode-debug-agent` 插件，专门用于运行时调试：
-
-```json
-{
-  "plugin": ["opencode-debug-agent"]
-}
-```
-
-功能：
-- 启动 HTTP 服务器捕获执行数据
-- 提供 `debug_start`, `debug_read`, `debug_stop` 等工具
-- 自动在代码中插入 `fetch()` 埋点，捕获运行时的 input/output 数据
-
-#### 5.7.4 本地开发 Starter 模板
-
-```bash
-git clone https://github.com/darrenhinde/OpenCode-plugin-starter.git
-cd OpenCode-plugin-starter
-bun install
-bun run build:plugin   # 打包到 dist/
-```
-
-该模板包含：
-- 完整的 `my-little-ui` 示例插件（工具 + Hooks + Agent）
-- `context/` 目录：给 LLM 的插件开发知识库
-- 根目录 `config.json`：配置 OpenCode 加载本地插件
-- `package.json` 中使用 `"my-little-ui": "file:./my-little-ui"` 本地引用
-
-### 5.8 插件开发最佳实践
-
-1. **避免重复初始化**：使用 `seen` 集合防止同一函数被多次注册（当模块同时导出命名导出和默认导出时）
-2. **热重载注意**：目前 OpenCode 的插件系统正在完善热重载机制，上游正在添加 `skill.list` / `skill.load` 等钩子以支持单缓存、单失效点
-3. **内部 Hooks 分层**：如果 OpenCode 的原生钩子粒度不够，可以在插件内部再实现更细粒度的钩子系统（如 oh-my-opencode 内部实现了 46 个自己的 Hooks）
-4. **善用 `subscribeAll`**：通过 `event` 钩子 + `subscribeAll` 桥接，可以监听所有事件而不需要逐个订阅
 
 ---
 
