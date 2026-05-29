@@ -486,36 +486,19 @@ OpenCode 启动时按以下顺序选择默认模型：
       }
     },
     
-    // ------------------- Azure OpenAI 示例 -------------------
-    "azure": {
-      "models": {
-        "gpt-4o": {
-          "options": {}
-        }
-      },
-      "options": {
-        "apiKey": "{env:AZURE_OPENAI_API_KEY}",
-        "baseURL": "https://{env:AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/{env:AZURE_DEPLOYMENT_NAME}",
-        "apiVersion": "2024-12-01-preview"
-      }
-    },
-    
     // ------------------- 自定义模型 -------------------
-    "local-openai": {
-      // 需要指定定义协议类型，这里设置 openai 兼容协议，如果是 anthropic 需改为"@ai-sdk/anthropic"
+    "local-llm": {
+      // 需要指定定义协议类型，这里设置 openai 兼容协议
+      // 如果是 anthropic 需改为"@ai-sdk/anthropic"
       "npm": "@ai-sdk/openai-compatible",
-      
       // 提供商级选项：影响该提供商所有模型
       "options": {
         // 本地服务地址
-        "baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        
+        "baseURL": "http://localhost:8000/v1",        
         // api 密钥，本地服务可能不需要密钥
-        "apiKey": "你的 API key",
-        
+        "apiKey": "你的 API key",        
         // 超时设置（毫秒）
-        "timeout": 120000,
-        
+        "timeout": 120000,        
         // 最大重试次数
         "maxRetries": 3
       },
@@ -530,6 +513,33 @@ OpenCode 启动时按以下顺序选择默认模型：
         }
       }
     }
+
+		"guosen-anthropic": {
+      // 需要指定定义协议类型
+      // 如果是 openai 兼容协议，需改为"@ai-sdk/openai-compatible"
+      // 如果是 anthropic 需改为"@ai-sdk/anthropic"
+		  "npm": "@ai-sdk/anthropic",
+		  "options": {
+        // 本地服务地址
+        "baseURL": "https://aicoding.web.guosen.com.cn/openapi/anthropic/v1",
+        // "baseURL": "http://127.0.0.1:5000/openapi/anthropic/v1",
+        // api 密钥，本地服务可能不需要密钥
+        "apiKey": "你的 API key",
+        // 超时设置（毫秒）
+        "timeout": 120000,
+        // 最大重试次数
+        "maxRetries": 3
+		  },
+      // 模型特定配置
+		  "models": {
+        "claude-opus-4-6": {
+          // 模型名称，在 Agent 界面上展示
+          "name": "claude-opus-4-6",
+          // 模型参数（如果有）：每次调用该模型都使用的设置
+          "options": {}
+        }
+		  }
+		}
   },
   
   // ------------------- 模型选择 -------------------
@@ -551,7 +561,6 @@ OpenCode 启动时按以下顺序选择默认模型：
 ```
 
 > **配置小结：**
-> 
 > - **provider**：定义了 LLM 供应商的配置域，接着它的下一层配置就是 LLM 供应商的集合，包括 **知名大模型供应商（openai、anthropic、google 等）** 或者 **自定义大模型（个人搭建、公司搭建的大模型等）**
 > - 各个 LLM 供应商的配置主要包括 npm、name、options、models 等
 >   1. **npm**（可选）：大模型的接入协议，**openai** 或者 **anthropic** 协议，对于知名供应商可以不用配置，opencode 知道它们的协议类型，对于自定义大模型建议配置上
@@ -603,25 +612,11 @@ Oh My OpenAgent（OMO）是 OpenCode 最流行的插件，提供多代理协作�
 
 ## 四、常见问题与故障排除
 
-### 1. 配置验证
+### 1. 调试日志
 
-使用以下命令检查配置文件是否正确：
-```bash
-opencode config validate
-```
+调试日志保存在 `~/.local/share/opencode/*.log`
 
-### 2. 调试模式
-
-启用调试模式查看详细的 API 请求和响应：
-```jsonc
-{
-  "debug": true,
-  "debugLSP": true
-}
-```
-调试日志保存在 `~/.local/share/opencode/debug.log`
-
-### 3. 常见错误
+### 2. 常见错误
 
 1. **模型 ID 错误**：确保 `provider_id/model_id` 格式正确
 2. **API 地址错误**：必须以 `/v1` 结尾
@@ -629,7 +624,7 @@ opencode config validate
 3. **超时错误**：增加 `timeout` 参数值（单位：毫秒）
 5. **本地模型连接失败**：确认本地服务已启动且端口正确
 
-### 4. 推荐模型组合
+### 3. 推荐模型组合
 
 **全栈开发**：
 - 主模型：`anthropic/claude-sonnet-4-5`
