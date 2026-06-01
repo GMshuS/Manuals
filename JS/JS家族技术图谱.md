@@ -41,31 +41,125 @@
 
 ## 三、包管理工具（项目依赖管控）
 统一管理第三方库、版本、安装卸载，JS项目必备基础工具
-| 名称 | 核心定位 | 核心优势 | 适用场景 | 学习成本 | 生态成熟度 |
-|------|----------|----------|----------|----------|------------|
-| npm | Node官方默认包管理器 | 生态最全，库数量最多，原生兼容所有Node项目，学习门槛最低 | 所有Node/JS项目，尤其是兼容旧环境的项目 | 极低 | 极高 |
-| Yarn | 早期npm替代方案，Facebook出品 | 并行安装速度快，确定性版本锁定，离线缓存机制完善 | 老牌Node项目、需要稳定版本锁定的团队项目 | 低 | 高（逐渐被pnpm替代） |
-| pnpm | 现代高性能包管理器，当前行业主流 | 内容寻址存储，硬链接共享依赖，磁盘占用节省90%，安装速度最快，兼容npm/Yarn生态 | 所有现代JS/TS项目、monorepo多包项目、大型团队协作 | 低 | 极高 |
+| 工具 | 核心定位 | 架构特点 | 安装速度 | 磁盘占用 | 依赖管理 | 类型锁定 | 配置难度 | 生态成熟度 | 核心亮点 | 主要短板 |
+| ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+| **npm** | Node.js默认包管理器 | 扁平化+嵌套混合，传统node_modules | 慢（单线程为主） | 高（重复安装） | 宽松，易出现**幽灵依赖** | package-lock.json | 低（零配置起步） | ★★★★★（最大） | 原生内置、兼容性最强、学习成本低 | 速度慢、磁盘占用高、依赖解析不严格 |
+| **Yarn v4**<br>(Berry) | 企业级确定性安装 | 扁平化+PnP(Plug'n'Play) | 中快 | 低（PnP无node_modules） | 严格，支持Plug'n'Play | yarn.lock | 中（PnP需适配） | ★★★★☆ | 确定性安装、离线缓存、PnP省空间 | 小众包适配问题、迁移成本高 |
+| **pnpm** | 高效磁盘+严格依赖 | 内容寻址存储+符号链接 | 快（多线程） | 极低（共享存储，省70%） | 严格隔离，**无幽灵依赖** | pnpm-lock.yaml | 低（兼容npm命令） | ★★★★☆ | 磁盘最优、依赖严格、monorepo强 | 部分老项目兼容问题、符号链接复杂 |
+| **Bun** | 全栈极速工具链 | 一体化运行时+包管理器 | 极快（Zig编写，10-20倍npm） | 低（共享缓存） | 支持隔离安装 | bun.lockb | 极低（零配置） | ★★★☆☆ | 速度第一、一体化工具（运行时/打包/测试） | 生态较新、兼容性待完善 |
+| **cnpm** | 国内镜像加速版npm | 同npm，镜像替换 | 中（依赖网络） | 高（同npm） | 同npm | package-lock.json | 低 | ★★★★☆ | 解决国内npm安装慢问题 | 非官方、版本同步延迟 |
+
+### 1. npm（Node Package Manager）
+- **定位**：Node.js官方默认包管理器，生态基石
+- **特点**：
+  - 零配置起步，学习成本最低，适合新手
+  - 支持workspaces（v7+），基础monorepo能力
+  - 兼容性最强，几乎所有包都优先适配npm
+- **适用场景**：
+  - 初学者项目、小型工具、快速原型
+  - 老旧项目维护、兼容性要求极高的场景
+  - 不想额外安装工具的极简环境
+- **命令示例**：
+  ```bash
+  npm init -y          # 初始化项目
+  npm install <包名>    # 安装依赖
+  npm run <脚本>       # 执行package.json脚本
+  ```
+
+### 2. Yarn v4（Berry）
+- **定位**：企业级项目首选，强调确定性与稳定性
+- **特点**：
+  - 首创yarn.lock，保证团队成员安装结果一致
+  - PnP模式彻底消除node_modules，大幅减少磁盘占用
+  - 离线缓存机制，重复安装极快
+- **适用场景**：
+  - 大型企业应用、React Native项目
+  - 对版本一致性要求高的团队
+  - 追求极致磁盘优化的项目
+- **命令示例**：
+  ```bash
+  corepack enable      # 启用Yarn（Node.js v16.10+内置）
+  yarn init -2         # 创建Yarn v4项目
+  yarn add <包名>      # 安装依赖
+  ```
+
+### 3. pnpm（Performant npm）
+- **定位**：高效、严格、现代的包管理器，monorepo最佳选择
+- **特点**：
+  - 磁盘空间优化：全局共享包版本，多个项目共用一份，省70%空间
+  - 依赖严格隔离：只能访问显式声明的依赖，杜绝幽灵依赖
+  - 原生支持workspaces，monorepo管理最成熟
+- **适用场景**：
+  - 大型monorepo项目（如组件库、多包工具链）
+  - 商业项目（稳定性+严谨性优先）
+  - 多项目开发（磁盘空间敏感）
+- **命令示例**：
+  ```bash
+  npm install -g pnpm  # 安装pnpm
+  pnpm init            # 初始化项目
+  pnpm add <包名>      # 安装依赖
+  pnpm run <脚本>      # 执行脚本
+  ```
+
+### 4. Bun
+- **定位**：全栈极速工具链，不止是包管理器
+- **特点**：
+  - 速度极致：Zig语言编写，安装速度是npm的10-20倍
+  - 一体化：包管理器+运行时+打包器+测试运行器
+  - 兼容Node.js API，可无缝替换npm/Node
+- **适用场景**：
+  - 个人/小型新项目（追求开发效率）
+  - 前端构建流程（打包/测试/运行一体化）
+  - 性能敏感的CI/CD环境
+- **命令示例**：
+  ```bash
+  curl -fsSL https://bun.sh/install | bash  # 安装Bun
+  bun init                                  # 初始化项目
+  bun install                               # 安装依赖
+  bun run dev                               # 启动开发服务器
+  ```
+
+### 5. cnpm（淘宝npm镜像）
+- **定位**：国内npm镜像加速工具，解决网络问题
+- **特点**：
+  - 完全兼容npm命令，只是替换了镜像源
+  - 国内访问速度快，解决npm官方源不稳定问题
+- **适用场景**：
+  - 国内开发环境，npm安装慢/失败的情况
+  - 临时加速需求，不改变原有npm工作流
+- **命令示例**：
+  ```bash
+  npm install -g cnpm --registry=https://registry.npm.taobao.org
+  cnpm install <包名>    # 同npm，速度更快
 
 ---
 
 ## 四、构建编译工具（代码打包转换）
 
-将源码语法降级、模块化打包、压缩优化，适配线上环境运行
+整理主流 **TypeScript 相关构建/打包工具** 对比表，维度包含定位、能力、TS 支持、性能、配置、场景等，方便快速选型。
 
-### 4.1 语法转译工具
-| 名称 | 核心定位 | 核心优势 | 适用场景 | 学习成本 | 生态成熟度 |
-|------|----------|----------|----------|----------|------------|
-| Babel | 经典JS语法转译器，开源社区主导 | 生态最成熟，插件体系完善，支持全量ES版本降级、polyfill注入，兼容所有旧浏览器 | 需要兼容旧浏览器的前端项目、传统Webpack构建的项目 | 中 | 极高 |
-| SWC | Rust编写的高速JS/TS转译器 | 性能远超Babel（10-100倍），原生支持TS/JSX，零配置，内存占用低 | 现代前端项目、Vite/Rollup构建、需要提速的大型项目 | 低 | 极高 |
+| 工具/框架 | 核心定位 | 底层实现语言 | TS原生支持 | 核心技术栈 | 核心能力 | 关键特点 | 典型使用场景 |
+|---|---|---|---|---|---|---|---|
+| **tsc (TypeScript Compiler)** | 官方类型检查+基础转译 | TypeScript | ✅ 官方原生 | TypeScript、tsconfig.json | 类型检查、TS→JS转译、生成`.d.ts`声明、项目引用 | **唯一可做完整类型检查**；转译慢、不打包、单文件输出 | 类型校验、生成声明文件、纯TS源码发布、CI类型检查 |
+| **esbuild** | 极速转译/轻量打包器 | Go | ✅ 原生顶级 | Go、单通道并行编译、无AST抽象 | TS/JSX转译、打包、压缩、Tree-shaking、Sourcemap、多格式输出 | **速度最快（比tsc快45–100倍）**；**不做类型检查、不生成d.ts** | Node服务/CLI打包、脚本构建、开发环境转译、自定义构建流水线 |
+| **tsup** | 零配置TS库打包器 | Go(esbuild) | ✅ 原生 | esbuild、TypeScript API、Zod | 零配置、ESM/CJS双格式、自动生成`.d.ts`、监听、外部依赖自动识别 | **esbuild封装、开箱即用、TS库首选**；d.ts由tsc生成 | NPM工具库、Node.js组件库、轻量TS包发布 |
+| **Rollup** | 专注库的模块打包器 | JavaScript | ✅ 插件完善 | ESM图分析、Tree-shaking、插件体系 | 最优Tree-shaking、精细输出控制、多入口、插件生态丰富 | **库打包Tree-shaking质量最佳**；配置偏复杂、速度中等 | 框架/SDK、大型组件库、追求极致体积优化的库 |
+| **unbuild** | UnJS生态库构建工具 | JS+Go | ✅ TS友好 | Rollup+esbuild、mkdist、Stub模式 | 智能导出映射、Stub开发模式、多格式、Monorepo友好 | **Monorepo神器、Stub模式即时联动、自动读package.json** | Monorepo子包、UnJS/Nuxt生态、复杂导出映射管理 |
+| **Vite** | 现代前端应用构建工具 | JS+Go | ✅ 原生顶级 | esbuild(开发)、Rollup(生产)、ESM原生服务 | 开发服务器、HMR、SPA/SSR、库模式、插件生态 | **开发体验最优、冷启动快、HMR毫秒级**；dev/prod双引擎 | Vue/React/TS前端应用、SPA、组件库、SSR应用 |
+| **Webpack 5** | 全能应用打包器 | JavaScript | ✅ @types完善 | 模块化图、Loader/Plugin、Chunk分割、热更新 | 代码分割、懒加载、模块联邦、复杂资源处理、庞大生态 | **生态最成熟、兼容所有场景**；大型项目构建慢、配置重 | 大型遗留企业应用、微前端、复杂资源依赖项目 |
+| **Rspack** | 高性能Webpack兼容打包器 | Rust | ✅ TS友好 | Rust、Webpack兼容API、并行编译 | 兼容Webpack插件/Loader、极速构建、增量编译、模块联邦 | **Rust重写、速度接近esbuild、无缝迁移Webpack项目** | 大型Webpack项目迁移、高性能企业级应用 |
+| **Turbopack** | Next.js原生高性能打包器 | Rust | ✅ TS原生 | Rust、增量编译、内存缓存、单图架构 | 极速冷启动、HMR、增量构建、Next.js深度集成 | **Vercel出品、大型应用构建极快、增量缓存强** | Next.js全栈应用、大型React应用、Monorepo应用 |
+| **SWC (@swc/core)** | Rust极速TS/JS转译器 | Rust | ✅ 原生 | Rust、AST并行、插件体系 | TS/JSX转译、装饰器、压缩、模块化、Sourcemap | **比tsc快20倍、不做类型检查**；Next/Rspack底层引擎 | 大规模转译、Babel替代、构建工具底层引擎 |
+| **Bun Build** | 一体化JS/TS运行+打包 | Zig | ✅ 原生 | Zig、esbuild兼容API、内置运行时 | 打包、转译、运行、测试、包管理一体化 | **全栈一体化、速度快、零依赖**；Bun生态优先 | Bun后端服务、轻量全栈项目、TS脚本运行 |
 
-### 4.2 模块化打包工具
-| 名称 | 核心定位 | 核心优势 | 适用场景 | 学习成本 | 生态成熟度 |
-|------|----------|----------|----------|----------|------------|
-| Webpack | 老牌全能模块化打包器 | 功能最全面，资源处理、代码分割、插件生态完善，支持复杂的前端工程化场景 | 大型复杂前端项目、需要兼容旧浏览器的传统项目、微前端架构 | 高 | 极高 |
-| Vite | 新一代极速开发构建工具，Vue团队出品 | 基于ESM原生模块，开发环境热更新秒级响应，生产环境基于Rollup打包，零配置开箱即用 | 所有现代前端项目、Vue/React/Svelte等框架的默认构建工具、快速原型开发 | 低 | 极高 |
-| Rollup | 专注ES模块的打包工具 | Tree-shaking优化极致，打包体积精简，原生支持ES模块，适合库开发 | 开源JS/TS库、工具类项目、需要极致精简产物的场景 | 中 | 高 |
-| esbuild | 超高速JS/TS打包压缩器 | 构建速度是Webpack的100倍以上，底层Go语言编写，原生支持TS/JSX/代码压缩 | 构建工具底层核心组件、需要极致提速的大型项目、轻量打包场景 | 中 | 高 |
+**选型指南**
+- ✅ 只做类型检查/生成d.ts → **tsc**
+- ✅ 发布NPM TS库、零配置 → **tsup**
+- ✅ 前端SPA/全栈应用、开发体验优先 → **Vite**
+- ✅ Monorepo子包、Stub即时开发 → **unbuild**
+- ✅ 大型Webpack项目、平滑迁移 → **Rspack**
+- ✅ Next.js应用、极致构建速度 → **Turbopack**
+- ✅ 底层转译引擎、极致性能 → **esbuild/SWC**
 
 ---
 
@@ -91,45 +185,156 @@
 
 ### 6.1 网页与前端构建（UI/展示层）
 这是用户直接看到的界面，负责将数据可视化。
-*   **核心 UI 库**：**React**（组件化强大）、**Vue**（易学易用）、**Solid**（性能极致）。
-*   **移动端/跨端**：**React Native**（写原生 App）、**Taro / uni-app**（一套代码多端输出：小程序/H5/App）。
-*   **桌面端**：**Electron**（构建桌面应用，如 VS Code）、**Tauri**（更轻量安全的桌面框架）。
-*   **页面/框架**：**Next.js**（React 官方全栈框架，支持 SSR/SSG）、**Nuxt.js**（Vue 官方全栈框架）。
+**主流网页框架（TS 生态）对比表**
+
+| 框架 | 核心技术栈 | 渲染模式 | TS 支持 | 包体积/性能 | 生态成熟度 | 典型场景 |
+|---|---|---|---|---|---|---|
+| **React + Next.js** | React + TS / JS，Node.js | CSR/SSR/SSG | 原生一流 | 中等；生态大、略重 | ★★★★★ | B端后台、SaaS、内容站、高交互Web |
+| **Vue 3 + Nuxt 3** | Vue3 + TS，Vite | CSR/SSR/SSG | 官方一等公民 | 轻量；编译优化好 | ★★★★★ | 管理系统、电商、移动端H5、快速开发 |
+| **Angular** | TypeScript（强类型） | 客户端渲染 | 内置强类型 | 偏大；企业级规范 | ★★★★☆ | 大型企业应用、长期维护项目、强规范团队 |
+| **Svelte / SvelteKit** | JS/TS，编译时 | 编译时生成原生JS | 良好 | 极小；运行时几乎0开销 | ★★★★ | 数据看板、营销页、性能敏感Web |
+| **SolidJS** | TS，响应式信号 | 编译时+细粒度更新 | 原生支持 | 极小；接近原生性能 | ★★★☆ | 高性能Web、复杂表单、动画密集应用 |
+| **Astro** | 任意框架+TS | 静态HTML+按需JS | 良好 | 最小化；默认无JS | ★★★★ | 博客、文档站、内容为主、SEO优先 |
+
+**跨端桌面框架（TS 优先）对比表**
+
+| 框架 | 核心技术栈 | 渲染方式 | TS 支持 | 包体积/内存 | 安全/权限 | 生态成熟度 | 典型场景 |
+|---|---|---|---|---|---|---|---|
+| **Electron** | HTML/CSS/TS+Node.js | 内置Chromium WebView | 很好 | 大（100–150MB）；内存高 | 中等（需手动加固） | ★★★★★ | VS Code、钉钉、飞书、通用桌面工具 |
+| **Tauri 2.0** | 前端任意框架(TS)+Rust | 系统WebView | 优秀 | 极小（3–10MB）；内存低 | 高（Rust沙箱） | ★★★★ | 轻量工具、高安全应用、长期项目 |
+| **Electrobun** | TypeScript+Bun runtime | 定制轻量WebView | 原生一等公民 | 很小（~15MB）；启动快 | 中等 | ★★★ | 追求极速启动+小体积的桌面应用 |
+| **React NodeGUI** | React+TS+Qt | 原生Qt控件 | 良好 | 中等；内存比Electron低70% | 高 | ★★☆ | 高性能桌面工具、偏原生体验应用 |
+| **Valdi（Beta）** | TypeScript AOT编译 | 原生控件（无WebView） | 原生强类型 | 小；内存极低 | 高 | ★☆ | 新技术尝鲜、追求原生性能的TS项目 |
+
+
+**选型指南**
+- **网页优先、中大型应用**：选 **Next.js（React）** 或 **Nuxt 3（Vue）**，TS支持好、生态强。
+- **网页、极致性能/小体积**：选 **SolidJS** 或 **SvelteKit**。
+- **桌面、成熟稳妥、前端直接搬**：选 **Electron**。
+- **桌面、小体积+高性能+安全**：选 **Tauri 2.0**（TS前端+Rust后端）。
+- **桌面、纯TS、极速启动**：关注 **Electrobun**。
 
 ### 6.2 API 服务开发（服务交互层）
 这是后端的“大门”，负责接收请求、返回数据。
-*   **Web 服务器**：**Express**（轻量元老）、**Koa**（Express 下一代）、**Fastify**（高性能新星）。
-*   **API 框架**：**NestJS**（企业级，强类型 TS 支持，依赖注入）、**Hono**（边缘高性能，全平台运行）。
-*   **文档/规范**：**Swagger / OpenAPI**（自动生成 API 文档）、**Zod**（TypeScript 优先的 Schema 验证）。
+| 框架名称 | 核心技术栈 | TS 支持 | 性能 | 开发体验 | 生态/成熟度 | 核心特点 | 典型使用场景 |
+|---|---|---|---|---|---|---|---|
+| **NestJS** | Node.js + TS + 装饰器 | 🌟 **原生完美** | 中高 | 极佳 | 🌟🌟🌟🌟🌟<br>最成熟企业级 | 模块化、IOC、AOP、微服务、全栈架构 | 企业中台、大型后端、微服务、管理系统后端 |
+| **Elysia** | Bun + TS | 🌟 **原生一等公民** | 🚀 **极高（远超 Express）** | 极简极速 | 🌟🌟🌟🌟<br>新兴主流 | 类型安全、自动生成 OpenAPI、极快 | Bun 生态、高性能接口、小服务、API 服务 |
+| **Hono** | Cloudflare Workers / Node / Bun / 边缘函数 + TS | 🌟 极佳 | 🚀 极高 | 极简轻量 | 🌟🌟🌟🌟 | 跨运行时、超小体积、边缘部署首选 | 边缘函数、跨平台 API、轻量服务、Serverless |
+| **Fastify** | Node.js + TS | 🌟 优秀 | 高（Node 最快之一） | 好 | 🌟🌟🌟🌟🌟 | 高性能、Schema 验证、日志完善 | 高性能 Node API、高并发接口、微服务 |
+| **Express** | Node.js + TS | 一般（需手动配置） | 中 | 简单 | 🌟🌟🌟🌟🌟 | 最经典、生态最大、教程最多 | 小型项目、简单接口、传统服务、学习入门 |
+| **Koa** | Node.js + TS | 一般（需手动配置） | 中高 | 轻量简洁 | 🌟🌟🌟🌟 | 中间件优雅、洋葱模型 | 轻量接口、自定义框架、中小型服务 |
+| **FeatherJS** | Node.js + TS | 良好 | 中 | 高 | 🌟🌟🌟🌟 | 实时 API、REST + WebSocket、微服务 | 实时应用、聊天、通知、自动 CRUD 服务 |
+| **LoopBack** | Node.js + TS | 良好 | 中 | 低代码 | 🌟🌟🌟 | IBM 出品、自动生成 API、OpenAPI | 企业低代码 API、快速 CRUD 服务 |
+
+**选型指南**
+- 企业项目、大型后端 → NestJS
+- 高性能、Bun 技术栈 → Elysia
+- 边缘函数、跨平台 Serverless → Hono
+- Node 高性能 API → Fastify
+- 新手学习、简单小接口 → Express
 
 ### 6.3 实时通信（Socket 层）
 处理即时通讯、聊天室、实时协作等场景。
-*   **核心库**：**Socket.IO**（功能最全，支持断线重连）、**WS**（极简高性能 WebSocket）。
-*   **实时框架**：**PeerJS**（WebRTC 点对点通信）、**NestJS + Websockets**（结合 Nest 的强类型能力）。
+| 框架 | 核心技术栈 | TS 支持 | 性能/连接数 | 核心特点 | 典型使用场景 |
+|---|---|---|---|---|---|
+| **Socket.IO** | Node.js，WebSocket/长轮询/HTTP 流自适应 | 官方完善，类型齐全 | 中高（单进程万级） | 自动降级、房间/命名空间、断线重连、广播、事件驱动 | 通用 IM、在线协作、实时看板、通知系统、中小规模实时应用 |
+| **ws** | Node.js 原生 WebSocket，纯 JS 内核 | 良好（@types/ws） | 极高（单进程 5–10 万） | 轻量无依赖、标准 WebSocket、二进制支持、极简 API | 高并发实时网关、行情推送、游戏底层、需要极致性能的基础服务 |
+| **uWebSockets.js** | C++ 内核 + Node.js 绑定 | 中等（社区类型） | 顶级（单进程 10–50 万） | 超低延迟、内存占用极小、HTTP+WebSocket 一体、无垃圾回收 | 超大规模实时服务、直播弹幕、高频交易、万人在线游戏服务器 |
+| **Colyseus** | TypeScript，WebSocket，状态同步 | 原生一流（强类型） | 中高（房间隔离） | 游戏专用、房间为一等公民、自动状态差分、序列化优化 | 多人在线游戏、实时对战、虚拟世界、需要状态同步的互动应用 |
+| **TSRPC** | TypeScript 原生，WebSocket/HTTP 双协议 | 原生顶级（类型驱动） | 中高（协议优化） | 全栈类型安全、自动校验、二进制序列化、RPC+推送一体 | 全栈 TS 实时应用、IM、小程序/APP 实时接口、前后端同构项目 |
+| **SocketCluster** | Node.js，WebSocket，集群化 | 良好 | 高（分布式） | 水平扩展、集群通信、发布订阅、故障转移 | 分布式实时系统、跨机房 IM、大规模推送平台、企业级实时中台 |
+| **PartyKit** | TypeScript，WebSocket，Cloudflare 边缘 | 原生一流 | 高（边缘分布式） | 边缘部署、自动扩缩容、房间管理、CRDT 协同 | 边缘实时应用、轻量协作工具、多人小游戏、Serverless 实时服务 |
+
+**选型指南**
+- **通用实时、快速开发、稳定优先** → **Socket.IO**
+- **高并发、低延迟、自定义协议** → **ws**
+- **超大规模、极致性能、百万连接** → **uWebSockets.js**
+- **多人游戏、状态同步、房间管理** → **Colyseus**
+- **全栈 TS、类型安全、RPC+推送** → **TSRPC**
+- **边缘部署、Serverless、轻量协同** → **PartyKit**
 
 ### 6.4 微服务架构（分布式系统）
 构建大型、高可用、可独立部署的系统。
-*   **微服务框架**：**NestJS**（TS 微服务首选）、**Moleculer**（微服务框架）。
-*   **服务治理**：**Consul / etcd**（服务发现）、**Kubernetes (K8s)**（容器编排）。
-*   **API 网关**：**Kong**（基于 Nginx 的网关）、**Express Gateway**。
+| 框架 | 底层运行时 | 核心技术栈 | TS 支持 | 服务治理能力 | 性能 | 定位 & 特点 | 典型使用场景 |
+|---|---|---|---|---|---|---|---|
+| **NestJS + Microservices** | Node.js | 模块化、IOC、RPC、消息队列 | **原生顶级** | 服务发现、负载均衡、RPC、事件总线 | 中高 | 企业级全栈微服务，开箱即用，多协议兼容 | **大型企业中台、微服务后端、SaaS、分布式系统** |
+| **Moleculer** | Node.js | 原生分布式、服务注册表、RPC | 优秀 | 服务发现、熔断、限流、负载均衡、追踪 | 高 | 轻量高速、全功能微服务框架、零配置 | **中小/大型微服务、快速分布式项目、高并发服务** |
+| **MidwayJS + Micro** | Node.js | 阿里系、云原生、RPC | **原生顶级** | 服务治理、配置中心、链路追踪、熔断 | 中高 | 阿里企业级、云原生、稳定可靠 | **阿里生态、企业级分布式、大型中台** |
+| **tRPC + 微服务扩展** | Node/Bun | TypeScript 原生 RPC、Type-Safe | **自动推导** | 轻量、无代码生成、前后端一体 | 高 | 极致类型安全、无 Schema、极简 | **全栈 TS 微服务、轻量分布式、前后端同构** |
+| **TSRPC** | Node/Bun | TS 原生、二进制 RPC | **顶级** | 自动校验、服务路由、双协议 | 高 | 全栈类型安全、跨语言、微服务网关 | **强类型微服务、安全接口、同构项目** |
+| **Hono + RPC** | Bun/Edge/Node | 轻量、跨平台、边缘微服务 | 优秀 | 极简路由、类型安全 | 极快 | 超轻量、跨运行时、边缘优先 | **边缘微服务、Serverless 分布式、轻量API** |
+| **Kafka + RabbitMQ 生态** | Node.js | 消息队列、事件驱动、异步通信 | 良好 | 事件总线、削峰填谷、最终一致性 | 高 | 异步微服务、事件驱动架构 | **高吞吐、解耦、大数据量分布式系统** |
+
+**选型指南**
+- **企业级、大型项目、规范架构** → **NestJS 微服务**
+- **高性能、快速开发、分布式** → **Moleculer**
+- **阿里生态、企业中台** → **MidwayJS**
+- **全栈 TS、零冗余、类型安全** → **tRPC**
+- **强校验、高安全、同构项目** → **TSRPC**
+- **边缘计算、Serverless 微服务** → **Hono RPC**
 
 ### 6.5 数据处理与分析（数据智能层）
 负责存储、处理数据，做复杂计算和智能分析。
-*   **数据处理**：**Pandas.js**（Python 生态的 JS 版）、**NumJS**（科学计算库）。
-*   **数据库 ORM**：**Prisma**（下一代 TS ORM）、**TypeORM**、**Drizzle**（高性能）。
-*   **缓存/队列**：**Redis**（缓存）、**Bull**（基于 Redis 的任务队列）。
-*   **BI 可视化**：**ECharts**（百度开源图表）、**Recharts**（React 图表）、**D3.js**（数据可视化核心）。
+| 框架名称 | 核心定位 | 运行环境 | TS 支持 | 核心技术栈 | 核心特点 | 性能 | 典型使用场景 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Danfo.js** | 前端/Node 数据科学核心库<br>(TS 版 Pandas) | 浏览器 / Node.js | 🌟 原生顶级 | TS + WebAssembly | 对标 Python Pandas；内置 DataFrame/Series；支持统计、筛选、聚合 | 中高 | 全栈数据清洗、表格计算、统计分析、CSV/JSON 数据处理 |
+| **Polars-ts** | 极速列式大数据处理库 | 浏览器 / Node.js | 🌟 原生顶级 | Rust 内核 + Wasm/TS 绑定 | 列式存储；**百万/千万级数据** 秒级处理；无冗余开销 | 极快（天花板） | 超大数据集分析、高性能统计、企业级数据计算 |
+| **Arquero** | 声明式函数式数据处理 | 浏览器 / Node.js | 🌟 原生 TS | 函数式编程 + 链式 API | IBM 开源；类 SQL 语法；数据变换/分组/Join 原生支持 | 高 | 前端 BI、交互式数据探索、标准化数据清洗 |
+| **Tidy.js** | Tidy 风格轻量数据清洗 | 浏览器 / Node.js | 🌟 原生 TS | TypeScript | 语法简洁；对标 R 语言 Tidyverse；快速数据整理 | 中 | 小型数据集、快速数据预处理、简单统计 |
+| **Lodash** | 通用数据工具库 | 全平台 | 完美（@types） | JavaScript | 最成熟的数组/对象/集合处理；工具函数全覆盖 | 极高 | 通用数据辅助处理、业务数据格式化 |
+| **ECharts** | 数据可视化分析 | 浏览器 | 🌟 原生 TS 重构 | Canvas / SVG | 全品类图表；大数据可视化；大屏/BI 看板专用 | 高 | 数据可视化分析、商业看板、实时数据大屏 |
+| **TensorFlow.js** | AI 驱动数据分析 | 浏览器 / Node.js | 🌟 原生顶级 | TS + WebGL/Wasm | 机器学习模型；预测分析、异常检测、分类聚类 | 中高 | 智能数据分析、用户行为预测、异常数据识别 |
+| **Prisma** | 数据库数据处理 ORM | Node.js | 🌟 原生顶级 | TypeScript | 类型安全；自动生成 Schema；数据库查询/聚合/处理 | 中高 | 业务数据库数据操作、复杂查询、数据持久化 |
+| **Drizzle ORM** | 高性能 SQL 数据处理 | Node.js | 🌟 原生顶级 | TypeScript | 零运行时开销；类型安全原生 SQL；极致性能 | 极高 | 高性能数据库数据分析、海量数据查询 |
+| **Mississippi** | Node 流式数据处理 | Node.js | 良好（@types） | Node Stream API | 流数据分块处理；大文件/实时数据解析 | 高 | 大文件数据分析、日志处理、流式数据清洗 |
+
+**选型指南**
+1. **常规全栈数据清洗/统计** → **Danfo.js**（最简单、最通用）
+2. **超大数据集、高性能分析** → **Polars-ts**（速度碾压同类）
+3. **企业级标准化数据处理** → **Arquero**
+4. **数据可视化/BI 看板** → **ECharts**
+5. **数据库数据查询/处理** → **Prisma（易用）/ Drizzle（性能）**
+6. **智能分析、预测、异常检测** → **TensorFlow.js**
+7. **大文件/流式数据处理** → **Mississippi**
 
 ### 6.6 网络爬虫（数据采集层）
 从互联网抓取数据。
-*   **爬虫框架**：**Puppeteer**（无头浏览器，模拟真人操作）、**Cheerio**（服务端 jQuery，快速解析 HTML）。
-*   **高性能爬虫**：**Crawlee**（Apify 出品，抗反爬能力强）、**Playwright**（多浏览器自动化）。
+| 框架/组合 | 核心定位 | 运行环境 | TS支持 | 核心技术栈 | 核心能力 | 反爬能力 | 性能开销 | 典型使用场景 | 核心特点 |
+|---|---|---|---|---|---|---|---|---|---|
+| **Crawlee (Apify)** | 企业级全功能爬虫框架（TS原生） | Node.js | ✅ 原生顶级 | TypeScript、got-scraping、Cheerio、Playwright/Puppeteer | 请求队列、自动重试、并发控制、代理轮换、链接入队、数据持久化、浏览器池管理 | 内置代理/指纹、可集成Stealth、防封禁 | 中（HTTP轻、浏览器重） | 大规模生产级爬虫、分布式采集、定时任务、Apify Actor部署 | 统一接口（Cheerio/Playwright/Puppeteer三模式）；开箱即用的生产治理能力；内置Dataset/KeyValue存储 |
+| **Playwright** | 现代无头浏览器自动化/渲染爬虫 | Node.js/Browsers | ✅ 原生顶级 | TypeScript、Chrome DevTools Protocol、多浏览器驱动 | 多浏览器(Chromium/Firefox/WebKit)、自动等待、网络拦截、截图/录屏、Shadow DOM穿透、模拟交互 | 需搭配Stealth插件；指纹更自然 | 高（浏览器进程） | SPA/JS渲染页面、复杂交互（登录/滑块/无限滚动）、自动化测试、数据可视化采集 | 微软维护、跨浏览器、自动等待机制强、API统一、生态完善 |
+| **Puppeteer** | Chrome专用无头浏览器自动化 | Node.js | ✅ 完美（@types） | TypeScript、Chrome DevTools Protocol | Chrome/Chromium控制、页面渲染、交互、截图、网络拦截 | 原生弱；需puppeteer-extra+stealth | 高 | Chrome专属站点、简单JS渲染采集、爬虫原型验证 | Google官方、Chrome生态最稳、API简洁、社区成熟 |
+| **Puppeteer-extra + Stealth** | 增强型防爬虫浏览器自动化 | Node.js | ✅ 良好 | Puppeteer + 插件体系 | 隐藏webdriver指纹、模拟真实浏览器特征、广告拦截、验证码求解插件 | 强（指纹伪装、绕过基础检测） | 高 | 高反爬站点（Cloudflare基础版）、登录态保持、复杂人机验证场景 | 插件化扩展、可集成reCAPTCHA/代理、兼容原生Puppeteer API |
+| **Cheerio + Axios/got-scraping** | 轻量静态HTML采集（TS首选） | Node.js | ✅ 完美（@types） | TypeScript、HTTP客户端、jQuery-like解析 | 纯HTTP请求、静态HTML解析、DOM查询、JSON接口抓取 | 基础（UA/请求头伪装、got-scraping含TLS指纹） | 极低（无浏览器） | 服务端渲染页面、API数据、高吞吐批量采集、简单数据提取 | 速度极快、内存占用小、类jQuery语法、学习成本低 |
+| **got-scraping** | 抗指纹HTTP采集专用客户端 | Node.js | ✅ 原生 | got、TLS指纹、浏览器头生成 | 自动生成真实浏览器请求头、TLS指纹模拟、代理支持、会话保持 | 中强（解决基础HTTP指纹检测） | 极低 | 静态页/API、高并发、Cloudflare基础绕过、无需浏览器 | Apify出品、专为爬虫优化、开箱即用反指纹HTTP请求 |
+
+**选型指南**
+- ✅ 生产级、大规模、需要调度/代理/重试 → **Crawlee**
+- ✅ JS渲染、SPA、复杂交互、多浏览器 → **Playwright**
+- ✅ 纯静态、高速度、低成本、高并发 → **Cheerio + got-scraping**
+- ✅ 高反爬、Cloudflare、指纹检测 → **Puppeteer-extra + Stealth / Crawlee+代理**
 
 ### 6.7 AI Agent 开发框架（未来智能层）
 这是最前沿的方向，用来构建大模型应用、智能代理（Agent）。
-*   **大模型调用**：**LangChain.js**（构建 LLM 应用的事实标准，支持 RAG、Agent）、**Dify**（可视化大模型应用开发平台）。
-*   **Agent 框架**：**AutoGPT.js**（自主智能体）、**AgentScript**（Agent 开发框架）。
-*   **本地部署**：**Ollama**（本地部署大模型）、**llama.cpp**（轻量级推理）。
+| 框架/库 | 核心定位 | 运行环境 | TS支持 | 核心技术栈 | 核心能力 | 核心特点 | 典型使用场景 |
+|---|---|---|---|---|---|---|---|
+| **LangChain.js + LangGraph** | 通用LLM应用/复杂状态智能体编排（Python生态移植） | Node.js、Edge、Browser | ✅ 完善（@types） | TS、Zod、LangGraph状态图、LangSmith、RAG、工具链 | 工具调用、记忆、RAG、状态图编排、子Agent、HITL、可观测追踪 | 生态最丰富、跨Python/JS、灵活可扩展；生产级能力需额外集成（LangSmith/队列） | 复杂多步骤推理、知识库问答、企业级RAG、多智能体协作 |
+| **Vercel AI SDK（ai）** | 全栈前端优先、流式Agent/UI集成工具包 | Node.js、Edge、Browser、Next.js | ✅ 原生顶级 | TS、React/Next Hooks、统一模型API、Zod、流式输出 | 统一模型调用、结构化输出、工具调用、流式Token、useChat/useObject、Edge友好 | 前端/边缘最优、轻量、与Next.js无缝集成、多模型统一接口；**非完整Agent编排框架** | 聊天机器人、生成式UI、轻量工具调用Agent、边缘/Serverless部署 |
+| **Mastra** | TS原生、开箱即用生产级Agent全栈框架 | Node.js、Bun、Edge | ✅ 原生顶级 | TS、Zod、工作流、记忆、评估、可观测、MCP工具协议 | 单/多Agent、Supervisor协作、类型安全工作流、HITL、记忆、评估、追踪、沙箱执行 | **TS-first原生设计**、全链路生产能力、内置Studio调试、可插拔模型路由、完整DevOps原语 | 企业级自动化、复杂业务工作流、多Agent团队协作、需要可观测/评估的生产Agent |
+| **VoltAgent** | 极致类型安全、轻量模块化Agent框架 | Node.js、Browser、Edge | ✅ 原生顶级 | TS、Zod、模块化核心、Vercel AI Provider、内置存储 | 类型安全工具/记忆、子Agent委派、结构化输出、模块化包、轻量内存/持久化 | 编译期类型安全、零运行时意外、模块化、小体积、Zod强校验 | 轻量类型安全Agent、移动端/浏览器Agent、微服务小Agent、快速原型 |
+| **Google Genkit** | 企业级、可观测优先、多语言Agent/工作流框架 | Node.js、Browser、Edge | ✅ 原生顶级 | TS、Google模型生态、插件化、追踪/评估、可插拔工具 | 模型统一抽象、工具、流、评估、追踪、代码执行、多模型插件 | Google官方、强可观测、企业级评估、多语言（TS/Python）、云原生友好 | 企业级LLM应用、生产级可观测、多模型统一治理、Google云生态集成 |
+| **AutoGen-TS** | 多智能体协作（对话式）框架 | Node.js | ✅ 良好 | TS、对话轮次、角色分工、代码执行 | 多Agent对话、角色分工、自动工具调用、代码解释器、群聊协作 | 专注多Agent对话协作、自动任务委派、微软生态、适合团队分工场景 | 代码生成/数据分析Agent、科研协作、复杂任务分工、群聊式多Agent |
+| **Calljmp** | 托管式生产Agent运行时（非纯库） | Node.js | ✅ 原生 | TS、持久化状态、Suspend/Resume、可观测 | 长时运行、状态持久、HITL审批、分布式执行、追踪/成本监控 | **托管运行时**，专注生产执行而非纯库；内置状态、暂停/恢复、运维能力 | 长时间运行业务流程、需要人工审批、分布式调度、运维监控一体化Agent |
+
+**选型指南**
+- ✅ 复杂状态/多步骤/跨Python生态 → **LangChain.js + LangGraph**
+- ✅ Next.js/前端/边缘/轻量聊天Agent → **Vercel AI SDK**
+- ✅ TS原生、开箱即用生产、全链路能力 → **Mastra**
+- ✅ 极致类型安全、轻量、浏览器/移动端 → **VoltAgent**
+- ✅ 企业级可观测、Google云生态 → **Google Genkit**
+- ✅ 对话式多Agent分工协作 → **AutoGen-TS**
+- ✅ 长时运行、HITL、托管运维 → **Calljmp**
 
 ### 6.8 总结推荐
 如果你的目标是打造一个 **全能型 JS/TS 项目**，推荐的组合路径是：
