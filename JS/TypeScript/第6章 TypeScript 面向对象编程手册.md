@@ -83,22 +83,6 @@ class Person3 {
 }
 ```
 
-### Python 对比
-
-```python
-# Python 类定义
-class Person:
-    def __init__(self, name: str, age: int):
-        self.name = name
-        self.age = age
-    
-    def greet(self) -> str:
-        return f"Hello, I'm {self.name}"
-
-# Python 没有参数属性简写
-# Python 没有构造方法重载
-```
-
 ---
 
 ## 访问修饰符
@@ -158,28 +142,6 @@ console.log(dog.name);       // OK: public
 // console.log(dog.age);     // Error: protected
 // console.log(dog.dna);     // Error: private
 // dog.species = "Feline";  // Error: readonly
-```
-
-### Python 对比
-
-```python
-class Animal:
-    def __init__(self, name: str, age: int, species: str):
-        self.name = name          # public
-        self._age = age           # protected（约定）
-        self.__dna = "secret"     # private（名称修饰）
-        self._species = species   # 没有 readonly 关键字
-
-    def speak(self) -> str:
-        return f"{self.name} makes a sound"
-
-class Dog(Animal):
-    def show_age(self) -> int:
-        return self._age  # 可以访问，但违反约定
-
-# Python 的"私有"实际上是名称修饰
-# self.__dna -> self._Animal__dna
-# 仍可通过 _Animal__dna 访问
 ```
 
 ### 最新 private 语法（#）
@@ -278,22 +240,7 @@ interface PointInterface extends RealPoint {
 const p: PointInterface = { x: 1, y: 2, z: 3 };
 ```
 
-### Python 对比
 
-```python
-from typing import Protocol
-
-# Python 使用 Protocol（结构子类型化）
-class Flyable(Protocol):
-    def fly(self) -> str: ...
-    def land(self) -> None: ...
-
-class Swimmable(Protocol):
-    def swim(self) -> str: ...
-
-class Duck:
-    def fly(self) -> str:
-        return "Duck is flying"
     
     def land(self) -> None:
         print("Duck lands")
@@ -388,29 +335,6 @@ if (car instanceof Car) {
 }
 ```
 
-### Python 对比
-
-```python
-class Vehicle:
-    def __init__(self, brand: str, year: int):
-        self.brand = brand
-        self.year = year
-    
-    def start(self) -> str:
-        return f"{self.brand} starts"
-
-class Car(Vehicle):
-    def __init__(self, brand: str, year: int, doors: int):
-        super().__init__(brand, year)
-        self.doors = doors
-    
-    def start(self) -> str:  # 自动重写
-        return f"{super().start()} with {self.doors} doors"
-
-# Python 没有 override 关键字
-# 多态天然支持（鸭子类型）
-```
-
 ---
 
 ## 抽象类与抽象方法
@@ -471,34 +395,6 @@ shapes.forEach(s => console.log(s.describe()));
 | 构造函数 | ✅ | ❌ |
 | 访问修饰符 | ✅ | ❌ |
 | 多继承 | ❌（单继承） | ✅（多接口） |
-
-### Python 对比
-
-```python
-from abc import ABC, abstractmethod
-
-class Shape(ABC):
-    @property
-    @abstractmethod
-    def name(self) -> str: ...
-    
-    @abstractmethod
-    def area(self) -> float: ...
-    
-    def describe(self) -> str:
-        return f"{self.name} with area {self.area()}"
-
-class Circle(Shape):
-    @property
-    def name(self) -> str:
-        return "Circle"
-    
-    def __init__(self, radius: float):
-        self.radius = radius
-    
-    def area(self) -> float:
-        return 3.14159 * self.radius ** 2
-```
 
 ---
 
@@ -569,25 +465,6 @@ console.log(Parent.getType());  // "Parent"
 console.log(Child.getType());   // "Child"
 ```
 
-### Python 对比
-
-```python
-class MathUtils:
-    PI = 3.14159  # 类属性（类似静态属性）
-    E = 2.71828
-    
-    @staticmethod
-    def add(a: float, b: float) -> float:
-        return a + b
-    
-    @classmethod
-    def create_admin(cls, name: str):
-        return cls(name, "admin")
-
-# Python 的 @staticmethod 对应 TypeScript 的 static
-# Python 的 @classmethod 接收类作为第一个参数
-```
-
 ---
 
 ## Getter/Setter
@@ -628,34 +505,6 @@ console.log(temp.fahrenheit);  // 77
 temp.fahrenheit = 100;
 console.log(temp.celsius);     // 37.777...
 // temp.fahrenheit = -500;     // Error（通过 setter 连锁保护）
-```
-
-### Python 对比
-
-```python
-class Temperature:
-    def __init__(self, celsius: float = 0):
-        self._celsius = celsius
-    
-    @property
-    def celsius(self) -> float:
-        return self._celsius
-    
-    @celsius.setter
-    def celsius(self, value: float):
-        if value < -273.15:
-            raise ValueError("Temperature below absolute zero")
-        self._celsius = value
-    
-    @property
-    def fahrenheit(self) -> float:
-        return self._celsius * 9 / 5 + 32
-    
-    @fahrenheit.setter
-    def fahrenheit(self, value: float):
-        self._celsius = (value - 32) * 5 / 9
-
-# Python @property 装饰器语法与 TypeScript get/set 等价
 ```
 
 ---
@@ -715,25 +564,6 @@ const element: DOMElement = {
 
 // this 参数在回调中的类型保护
 type Handler = (this: HTMLElement, event: Event) => void;
-```
-
-### Python 对比
-
-```python
-# Python 中 self 是显式的第一个参数
-class Button:
-    def __init__(self, label: str):
-        self.label = label
-    
-    def handle_click(self):  # self 显式声明
-        print(f"Button {self.label} clicked")
-    
-    # Python 在方法引用时，self 已绑定
-    def get_handler(self):
-        return self.handle_click  # 已经绑定了 self
-
-# Python 没有 this 丢失问题
-# self 是显式声明的
 ```
 
 ---
@@ -824,39 +654,6 @@ user3.activation.activate();
 console.log(user3.activation.isActive);  // true
 ```
 
-### Python 对比
-
-```python
-# Python 通过多继承实现混入
-class TimestampMixin:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.created_at = None
-        self.updated_at = None
-    
-    def touch(self):
-        self.updated_at = __import__('datetime').datetime.now()
-
-class ActivatableMixin:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.is_active = False
-    
-    def activate(self):
-        self.is_active = True
-    
-    def deactivate(self):
-        self.is_active = False
-
-class User(TimestampMixin, ActivatableMixin):
-    def __init__(self, name: str):
-        super().__init__()
-        self.name = name
-
-# Python 的多继承天然支持混入
-# TypeScript 需要函数式混入模式
-```
-
 ---
 
 ## 装饰器
@@ -914,28 +711,4 @@ class MyClass {
     console.log("This is secret");
   }
 }
-```
-
-### Python 对比
-
-```python
-# Python 装饰器（比 TypeScript 更常用）
-from functools import wraps
-
-def log(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        print(f"Calling {func.__name__} with {args}, {kwargs}")
-        result = func(*args, **kwargs)
-        print(f"Called {func.__name__}, result: {result}")
-        return result
-    return wrapper
-
-class Calculator:
-    @log
-    def add(self, a: float, b: float) -> float:
-        return a + b
-
-# Python 装饰器更灵活，函数和类都可以使用
-# TypeScript 装饰器主要用于类和类成员
 ```

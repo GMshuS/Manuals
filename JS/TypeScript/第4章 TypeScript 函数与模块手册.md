@@ -469,52 +469,6 @@ import { z } from "zod";
 import { UserService } from "@//services/user";
 ```
 
-### Python 对比
-
-```python
-# Python 模块系统
-
-# ===== math.py =====
-PI = 3.14159
-
-def add(a, b):
-    return a + b
-
-class Calculator:
-    def multiply(self, a, b):
-        return a * b
-
-# ===== app.py =====
-# 命名导入
-from math import PI, add, Calculator
-
-# 全部导入
-import math
-print(math.PI)
-
-# 别名
-from math import add as math_add
-
-# 动态导入
-import importlib
-module = importlib.import_module("math")
-
-# 重新导出
-# Python 在 __init__.py 中控制
-# __all__ = ["PI", "add"]
-```
-
-| 特性 | TypeScript (ESM) | Python |
-|------|------------------|--------|
-| 命名导出 | `export const` | 模块顶层变量 |
-| 默认导出 | `export default` | 无（模块本身） |
-| 命名导入 | `import { X }` | `from mod import X` |
-| 全部导入 | `import * as X` | `import mod` |
-| 类型导入 | `import type` | 无（类型在运行时不存在） |
-| 重新导出 | `export * from` | `from .mod import *` |
-| 动态导入 | `import()` | `importlib.import_module()` |
-| 循环依赖 | 部分支持（有陷阱） | 部分支持（有陷阱） |
-
 ---
 
 ## 声明文件 (.d.ts)
@@ -594,22 +548,6 @@ declare enum MyEnum {
 }
 ```
 
-### Python 对比
-
-```python
-# Python 使用 .pyi 文件（存根文件）
-# ===== math.pyi =====
-PI: float
-
-def add(a: int, b: int) -> int: ...
-
-class Calculator:
-    def multiply(self, a: int, b: int) -> int: ...
-
-# Python 的 .pyi 类似于 TypeScript 的 .d.ts
-# 都用于为无类型的代码提供类型信息
-```
-
 ---
 
 ## 常用内置函数
@@ -658,26 +596,4 @@ JSON.parse('{"a":1}');            // { a: 1 }
 // encodeURI / decodeURI
 encodeURI("https://example.com/测试");  // URL 编码
 decodeURI("%E6%B5%8B%E8%AF%95");       // URL 解码
-```
-
-### Python 对比
-
-```python
-# Python 对应函数
-type(42)                # <class 'int'>
-isinstance(obj, Cls)    # TypeScript 的 instanceof
-isnan(float('nan'))     # Python 的 isNaN
-
-int("42")               # 42
-int("ff", 16)           # 255
-float("3.14")           # 3.14
-str(42)                 # "42"
-bool(1)                 # True
-
-import json
-json.dumps({"a": 1})    # JSON 序列化
-json.loads('{"a": 1}')  # JSON 反序列化
-
-import urllib.parse
-urllib.parse.quote("测试")  # URL 编码
 ```

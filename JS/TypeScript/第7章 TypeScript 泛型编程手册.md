@@ -48,25 +48,6 @@ const obj = identity({ x: 1 }); // obj: { x: number }
 | `R` | Return（返回类型） |
 | `P` | Parameters（参数类型） |
 
-### Python 对比
-
-```python
-# Python 3.12+ 泛型语法
-def identity[T](value: T) -> T:
-    return value
-
-# Python 3.11 及更早
-from typing import TypeVar
-
-T = TypeVar("T")
-
-def identity(value: T) -> T:
-    return value
-
-# Python 的类型变量 vs TypeScript 的类型参数
-# 概念相同，但 TypeScript 语法更简洁
-```
-
 ---
 
 ## 泛型函数
@@ -123,27 +104,6 @@ function merge<T, U, V>(obj1: T, obj2: U, obj3: V): T & U & V;
 function merge(...objs: Record<string, unknown>[]): Record<string, unknown> {
   return Object.assign({}, ...objs);
 }
-```
-
-### Python 对比
-
-```python
-from typing import TypeVar, Sequence
-
-T = TypeVar("T")
-U = TypeVar("U")
-
-def first(arr: Sequence[T]) -> T | None:
-    return arr[0] if arr else None
-
-def pair(first: T, second: U) -> tuple[T, U]:
-    return (first, second)
-
-# Python 3.12+
-def create_array[T: str = str](length: int, value: T) -> list[T]:
-    return [value] * length
-
-# Python 不支持函数重载（使用 @overload 仅类型检查）
 ```
 
 ---
@@ -314,30 +274,7 @@ class Collection<T> {
 }
 ```
 
-### Python 对比
 
-```python
-from typing import Generic, TypeVar, Optional
-
-T = TypeVar("T")
-
-class Stack(Generic[T]):
-    def __init__(self):
-        self._items: list[T] = []
-    
-    def push(self, item: T) -> None:
-        self._items.append(item)
-    
-    def pop(self) -> Optional[T]:
-        return self._items.pop() if self._items else None
-    
-    @property
-    def size(self) -> int:
-        return len(self._items)
-
-# Python 使用 Generic[T] 继承实现泛型类
-# TypeScript 使用 class ClassName<T>
-```
 
 ---
 
@@ -408,28 +345,6 @@ class Animal2 {
 
 const dog2 = createInstance(Animal2, "Rex");
 // dog2: Animal2
-```
-
-### Python 对比
-
-```python
-from typing import TypeVar, Protocol
-
-# Python 使用 Protocol 实现类型约束
-class HasLength(Protocol):
-    length: int
-
-T = TypeVar("T", bound=HasLength)
-
-def get_length(item: T) -> int:
-    return item.length
-
-# Python 3.12+ 约束语法
-def longer[T: HasLength, U: HasLength](a: T, b: U) -> T | U:
-    return a if a.length >= b.length else b
-
-# Python 没有 keyof 操作符
-# 使用 typing 模块的 get_type_hints 替代
 ```
 
 ---
@@ -504,29 +419,6 @@ type DeepAwaited<T> = T extends Promise<infer U>
   : T;
 
 type Resolved = DeepAwaited<Promise<Promise<string>>>;  // string
-```
-
-### Python 对比
-
-```python
-# Python 没有条件类型
-# 使用 @overload 或 isinstance 运行时判断
-
-# Python 3.12+ 的类型参数支持简单条件
-from typing import overload
-
-@overload
-def process(value: str) -> str: ...
-@overload
-def process(value: int) -> float: ...
-
-def process(value: str | int) -> str | float:
-    if isinstance(value, str):
-        return value.upper()
-    return value * 1.0
-
-# TypeScript 的条件类型在编译时计算
-# Python 的条件在运行时通过重载实现
 ```
 
 ---
@@ -646,29 +538,6 @@ type ExtractProperties<T, U> = {
 }[keyof T];
 ```
 
-### Python 对比
-
-```python
-# Python 没有映射类型
-# 使用 dataclass 和 TypeVar 模拟
-
-from dataclasses import dataclass, field
-from typing import Optional
-
-@dataclass
-class User:
-    id: int
-    name: str
-    email: str
-
-# 手动创建新类型
-@dataclass
-class NullableUser:
-    id: Optional[int]
-    name: Optional[str]
-    email: Optional[str]
-```
-
 ---
 
 ## 模板字面量类型
@@ -747,26 +616,6 @@ type Size = "sm" | "md" | "lg";
 
 type ClassName = `${Component}-${Variant}-${Size}`;
 // "button-primary-sm" | "button-primary-md" | ...
-```
-
-### Python 对比
-
-```python
-# Python 没有模板字面量类型
-# 运行时使用 f-string 和 enum 模拟
-
-from enum import Enum
-from typing import Literal
-
-class Direction(Enum):
-    TOP = "top"
-    BOTTOM = "bottom"
-
-# 使用 Literal 联合（需要手动列出所有值）
-Margin = Literal[
-    "margin-top", "margin-bottom",
-    "margin-left", "margin-right"
-]
 ```
 
 ---

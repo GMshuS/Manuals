@@ -66,20 +66,6 @@ my-project/
 └── README.md
 ```
 
-### Python 对比
-
-```bash
-# Python 项目初始化
-mkdir my-python-project
-cd my-python-project
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# TypeScript 的 tsconfig.json ≈ Python 的 pyproject.toml
-# TypeScript 的 package.json ≈ Python 的 pyproject.toml
-# TypeScript 的 node_modules ≈ Python 的 .venv/Lib/site-packages
-```
-
 ---
 
 ## tsconfig 配置详解
@@ -162,26 +148,6 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
   "extends": "./tsconfig.json",
   "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }
-```
-
-### Python 对比
-
-```python
-# Python 的 pyproject.toml（vs TypeScript tsconfig.json）
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.mypy]
-strict = true
-
-# mypy.ini（类似 tsconfig 的严格模式）
-[mypy]
-strict_equality = true
-no_implicit_optional = true
-warn_unused_ignores = true
-
-# Python 没有模块解析配置
-# Python 的 import 策略是运行时解析
 ```
 
 ---
@@ -277,23 +243,6 @@ pnpm remove express       # npm uninstall express
 pnpm update               # npm update
 ```
 
-### Python 对比
-
-```bash
-# Python pip（vs npm）
-pip install requests             # npm install requests
-pip install pytest --dev         # npm install -D pytest
-pip uninstall requests           # npm uninstall requests
-
-# Python pip freeze vs npm list
-pip freeze > requirements.txt    # 导出依赖
-npm list --depth=0               # 列出顶层依赖
-
-# Python 的 venv vs node_modules
-# Python 虚拟环境隔离全局包
-# Node.js 的 node_modules 每个项目独立
-```
-
 ---
 
 ## 构建工具
@@ -362,24 +311,6 @@ export default defineConfig({
     },
   },
 });
-```
-
-### Python 对比
-
-```bash
-# Python 构建工具（vs TypeScript）
-# setuptools（vs tsc）
-python setup.py sdist bdist_wheel
-
-# hatch / poetry（现代 Python 构建）
-hatch build                  # 构建包
-poetry build                 # 构建包
-
-# Python 的 pyinstaller（打包可执行文件）
-pyinstaller main.py          # 类似 tsc 编译
-
-# Python 没有与 webpack/vite 直接对应的工具
-# 前端资源使用 TypeScript 工具链管理
 ```
 
 ---
@@ -460,23 +391,6 @@ npx prettier --write src/       # 格式化全部
 
 # 类型检查
 npx tsc --noEmit                # 仅类型检查
-```
-
-### Python 对比
-
-```bash
-# Python 代码质量工具（vs TypeScript）
-# ESLint  ≈  ruff / pylint / flake8
-# Prettier ≈  black / isort
-# tsc --noEmit ≈  mypy / pyright
-
-# 安装
-pip install ruff black mypy
-
-# 运行
-ruff check src/            # ESLint
-black src/                 # Prettier（自动格式化）
-mypy src/                  # tsc --noEmit（类型检查）
 ```
 
 ---
@@ -581,32 +495,6 @@ npx vitest --coverage # 覆盖率报告
 npx vitest run        # 单次运行（CI）
 ```
 
-### Python 对比
-
-```python
-# Python 测试（vs TypeScript）
-# vitest ≈ pytest
-# jest ≈ unittest
-
-# pytest（Python 标准测试框架）
-import pytest
-from unittest.mock import Mock, patch
-
-def test_add():
-    assert add(1, 2) == 3
-    assert add(-1, 1) == 0
-
-def test_divide_by_zero():
-    with pytest.raises(ValueError, match="Division by zero"):
-        divide(1, 0)
-
-@pytest.mark.asyncio
-async def test_fetch_data():
-    with patch("builtins.open"):
-        result = await fetch_data("/api/test")
-        assert result == {"data": "test"}
-```
-
 ---
 
 ## 调试
@@ -688,23 +576,6 @@ console.log(util.inspect(complexObject, {
 }));
 ```
 
-### Python 对比
-
-```bash
-# Python 调试（vs TypeScript）
-# VS Code launch.json ≈ .vscode/launch.json（同样支持）
-# node --inspect ≈ python -m pdb
-# debugger 语句 ≈ breakpoint()（Python 3.7+）
-
-# Python 调试
-python -m pdb script.py    # 命令行调试
-python -m debugpy --listen 5678 script.py  # VS Code 远程调试
-
-# Python 日志（vs console.log）
-import logging
-logging.debug("value: %s", value)  # console.log
-```
-
 ---
 
 ## CI/CD 集成
@@ -769,29 +640,6 @@ jobs:
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
-
-### Python 对比
-
-```yaml
-# Python GitHub Actions（vs TypeScript）
-# 结构与 TypeScript 类似，替换 Node.js 为 Python
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: pip install -e ".[dev]"
-      - run: ruff check src/
-      - run: mypy src/
-      - run: pytest
 ```
 
 ---
@@ -863,36 +711,6 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(3000);
-```
-
-### Python 对比
-
-```python
-# Python async file I/O（vs TypeScript fs.promises）
-import asyncio
-import aiofiles
-
-async def read_config():
-    async with aiofiles.open("config.json") as f:
-        content = await f.read()
-        return json.loads(content)
-
-# Python EventEmitter（vs EventEmitter）
-import asyncio
-
-class MyEmitter:
-    def __init__(self):
-        self._handlers = {}
-    
-    def on(self, event, handler):
-        self._handlers.setdefault(event, []).append(handler)
-    
-    async def emit(self, event, *args):
-        for handler in self._handlers.get(event, []):
-            await handler(*args)
-
-# Python HTTP 服务器
-from http.server import HTTPServer, BaseHTTPRequestHandler
 ```
 
 ---
@@ -1010,30 +828,4 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
 const handleDrag = (e: React.DragEvent<HTMLDivElement>): void => {
   e.dataTransfer.setData("text/plain", "data");
 };
-```
-
-### Python 对比
-
-```python
-# Python Web 框架（vs React）
-# TypeScript + React ≈ Python + FastAPI/Flask + Jinja2/HTMX
-# 或 Python + React（前后端分离，与 TypeScript 相似）
-
-# FastAPI（前后端分离后端）
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-app = FastAPI()
-
-class User(BaseModel):
-    id: int
-    name: str
-    email: str
-
-@app.get("/api/users/{user_id}")
-async def get_user(user_id: int) -> User:
-    return User(id=user_id, name="Alice", email="alice@example.com")
-
-# Python Web 框架与 React 组件不同
-# React 是前端框架，Python 通常用于后端
 ```

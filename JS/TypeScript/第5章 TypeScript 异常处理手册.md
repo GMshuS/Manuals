@@ -59,25 +59,6 @@ try {
 }
 ```
 
-### Python 对比
-
-```python
-try:
-    data = json.loads(user_input)
-    print(data["name"])
-except json.JSONDecodeError as e:
-    print(f"JSON parse error: {e}")
-except KeyError as e:
-    print(f"Missing key: {e}")
-except Exception as e:
-    print(f"Unexpected error: {e}")
-finally:
-    cleanup()
-
-# Python 的 except 类似 TypeScript 的 catch
-# 但 Python 可以指定多个异常类型
-```
-
 ---
 
 ## finally 子句
@@ -140,22 +121,6 @@ function withResource<T>(resource: { close(): void }, fn: () => T): T {
 }
 ```
 
-### Python 对比
-
-```python
-# Python 的 with 语句（上下文管理器）
-def read_file(path: str) -> str:
-    with open(path, 'r') as file:
-        content = file.read()
-        if len(content) == 0:
-            return "empty"
-        return process_content(content)
-    # 文件自动关闭
-
-# 对比 TypeScript 的 try-finally
-# Python with 语句更简洁，自动清理
-```
-
 ---
 
 ## 抛出异常
@@ -214,22 +179,6 @@ function processValue(value: unknown): void {
   // 此处 value 收窄为 string
   console.log(value.toUpperCase());
 }
-```
-
-### Python 对比
-
-```python
-def divide(a: float, b: float) -> float:
-    if b == 0:
-        raise ValueError("Division by zero")
-    return a / b
-
-# Python 的 raise 语句
-# Python 通常抛出内置异常（ValueError, TypeError 等）
-# Python 使用 assert 关键字
-def process_value(value):
-    assert isinstance(value, str), "Value must be a string"
-    print(value.upper())
 ```
 
 ---
@@ -304,32 +253,7 @@ try {
 }
 ```
 
-### Python 对比
 
-```python
-# Python 内置异常层级
-# BaseException
-#   ├── SystemExit
-#   ├── KeyboardInterrupt
-#   ├── GeneratorExit
-#   └── Exception
-#       ├── StopIteration
-#       ├── ValueError
-#       ├── TypeError
-#       ├── RuntimeError
-#       └── ...
-
-# Python 没有 AggregateError
-# 但可以通过 ExceptionGroup 实现（Python 3.11+）
-try:
-    raise ExceptionGroup("group", [
-        ValueError("first"),
-        TypeError("second"),
-    ])
-except* ValueError as eg:
-    print(f"Caught ValueError: {eg.exceptions}")
-except* TypeError as eg:
-    print(f"Caught TypeError: {eg.exceptions}")
 ```
 
 ---
@@ -443,30 +367,6 @@ const Errors = {
 throw Errors.notFound("User", "123");
 ```
 
-### Python 对比
-
-```python
-# Python 自定义异常
-class ValidationError(ValueError):
-    def __init__(self, message: str, field: str | None = None, value=None):
-        super().__init__(message)
-        self.field = field
-        self.value = value
-
-class NetworkError(Exception):
-    def __init__(self, message: str, status_code: int, url: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
-        self.url = url
-    
-    @property
-    def is_server_error(self) -> bool:
-        return self.status_code >= 500
-
-# Python 继承异常没有原型链问题
-# Python 可以多重继承异常
-```
-
 ---
 
 ## 类型化错误处理
@@ -558,27 +458,7 @@ try {
 }
 ```
 
-### Python 对比
 
-```python
-from typing import Union, TypeVar, Generic
-
-# Python 的 Union 类型类似 Result 模式
-T = TypeVar("T")
-E = TypeVar("E")
-
-# Python 3.10+ 使用 | 语法
-def divide(a: float, b: float) -> float | str:
-    if b == 0:
-        return "Division by zero"
-    return a / b
-
-# 使用
-result = divide(10, 2)
-if isinstance(result, str):
-    print(f"Error: {result}")
-else:
-    print(f"Result: {result}")
 ```
 
 ---
@@ -670,28 +550,6 @@ window.addEventListener("unhandledrejection", (event) => {
   console.error("Unhandled promise rejection:", event.reason);
   event.preventDefault();
 });
-```
-
-### Python 对比
-
-```python
-import asyncio
-
-async def fetch_user_data(id: int) -> dict:
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"/api/users/{id}") as response:
-                response.raise_for_status()
-                return await response.json()
-    except aiohttp.ClientError as e:
-        raise RuntimeError(f"Failed to fetch user: {e}")
-
-# 全局异常处理
-import sys
-def global_exception_handler(exc_type, exc_value, exc_traceback):
-    print(f"Unhandled: {exc_type.__name__}: {exc_value}")
-
-sys.excepthook = global_exception_handler
 ```
 
 ---
@@ -788,35 +646,6 @@ try {
 }
 ```
 
-### Python 对比
-
-```python
-import asyncio
-import time
-from functools import wraps
-
-# Python 重试模式
-async def retry(fn, max_retries=3, delay=1.0, backoff="exponential"):
-    last_error = None
-    for attempt in range(max_retries + 1):
-        try:
-            return await fn()
-        except Exception as e:
-            last_error = e
-            if attempt == max_retries:
-                raise
-            wait = delay * (2 ** attempt) if backoff == "exponential" else delay
-            print(f"Attempt {attempt + 1} failed, retrying in {wait}s")
-            await asyncio.sleep(wait)
-
-# Python 超时模式
-async def with_timeout(coro, timeout_sec):
-    try:
-        return await asyncio.wait_for(coro, timeout=timeout_sec)
-    except asyncio.TimeoutError:
-        raise TimeoutError(f"Operation timed out after {timeout_sec}s")
-```
-
 ---
 
 ## 最佳实践
@@ -866,33 +695,3 @@ good().catch(err => console.error(err));
 | 第三方错误 | 包装为自定义错误 | 传播原始错误 |
 | 资源清理 | try-finally | 忘记释放 |
 | 超时控制 | `Promise.race` + 超时 Promise | 无限等待 |
-
-### Python 对比
-
-```python
-# Python 最佳实践
-# 1. 始终抛出 Exception 子类（不是 BaseException）
-# 2. 使用具体的异常类型
-# 3. 使用 finally 或 with 清理资源
-# 4. 不要 except: pass 静默吞掉异常
-# 5. 使用日志记录异常信息
-
-import logging
-
-logger = logging.getLogger(__name__)
-
-def process_order(data: dict) -> None:
-    try:
-        validate(data)
-        save_to_db(data)
-        send_notification(data)
-    except ValidationError as e:
-        logger.warning(f"Validation failed: {e}")
-        raise  # 重新抛出给调用者
-    except DatabaseError as e:
-        logger.error(f"DB error: {e}")
-        raise RuntimeError("Failed to save order") from e  # 异常链
-    except Exception:
-        logger.exception("Unexpected error")  # 自动记录 traceback
-        raise
-```

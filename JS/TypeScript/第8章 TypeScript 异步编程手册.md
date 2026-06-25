@@ -66,27 +66,6 @@ getUser(id, (err, user) => {
 });
 ```
 
-### Python 对比
-
-```python
-# Python 同步代码
-import time
-
-print("Start")
-time.sleep(1)  # 阻塞
-print("End")
-
-# Python 异步代码（asyncio）
-import asyncio
-
-async def main():
-    print("Start")
-    await asyncio.sleep(1)  # 非阻塞
-    print("End")
-
-asyncio.run(main())
-```
-
 ---
 
 ## Promise
@@ -205,35 +184,6 @@ const anyPromise = Promise.any([
 });
 ```
 
-### Python 对比
-
-```python
-import asyncio
-
-# Python asyncio.Future（类似 Promise）
-async def example():
-    # 创建任务
-    task = asyncio.create_task(fetch_user(1))
-    
-    # await 类似 .then()
-    user = await task
-    print(user)
-
-# Python 并发工具
-async def concurrent():
-    # asyncio.gather（类似 Promise.all）
-    users, posts = await asyncio.gather(
-        fetch("/api/users"),
-        fetch("/api/posts"),
-    )
-    
-    # asyncio.wait 设置 FIRST_COMPLETED（类似 Promise.race）
-    done, pending = await asyncio.wait(
-        [task1, task2],
-        return_when=asyncio.FIRST_COMPLETED
-    )
-```
-
 ---
 
 ## async/await
@@ -348,32 +298,6 @@ for await (const item of asyncIterable) {
 }
 ```
 
-### Python 对比
-
-```python
-import asyncio
-
-# Python async/await（与 TypeScript 高度相似）
-async def fetch_user(id: int) -> dict:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"/api/users/{id}") as response:
-            response.raise_for_status()
-            return await response.json()
-
-# Python 异步生成器
-async def generate_numbers():
-    for i in range(5):
-        await asyncio.sleep(1)
-        yield i
-
-async def consume_generator():
-    async for num in generate_numbers():
-        print(num)
-
-# Python async for（类似 TypeScript for-await-of）
-# Python async with（类似 TypeScript 无直接对应）
-```
-
 ---
 
 ## Promise 并发控制
@@ -450,27 +374,6 @@ async function batchFetch<T>(
 }
 ```
 
-### Python 对比
-
-```python
-import asyncio
-from asyncio import Semaphore
-
-# Python 信号量限制并发
-async def async_pool(items, concurrency, fn):
-    sem = Semaphore(concurrency)
-    
-    async def process(item):
-        async with sem:
-            return await fn(item)
-    
-    tasks = [process(item) for item in items]
-    return await asyncio.gather(*tasks)
-
-# Python 的 asyncio.Semaphore 是内置的
-# TypeScript 需要自行实现
-```
-
 ---
 
 ## 事件循环 (Event Loop)
@@ -534,30 +437,6 @@ microtaskOrder();
 process.nextTick(() => {
   console.log("nextTick");
 });
-```
-
-### Python 对比
-
-```python
-import asyncio
-
-# Python 事件循环
-# asyncio 事件循环与 Node.js 不同
-
-async def event_loop_example():
-    print("A")
-    
-    # 创建任务（类似宏任务）
-    loop = asyncio.get_event_loop()
-    loop.call_later(0, lambda: print("B (call_later)"))
-    
-    # await（类似微任务）
-    await asyncio.sleep(0)
-    print("C (after await)")
-    
-    print("D")
-
-asyncio.run(event_loop_example())
 ```
 
 ---
@@ -629,29 +508,6 @@ async function mapAsync<T, R>(
 ): Promise<R[]> {
   return Promise.all(items.map(fn));
 }
-```
-
-### Python 对比
-
-```python
-from typing import TypeVar, Awaitable
-
-T = TypeVar("T")
-
-# Python 类型安全异步
-async def fetch_json[T](url: str) -> T:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            response.raise_for_status()
-            return await response.json()
-
-# Awaitable 类型（类似 Promise）
-from collections.abc import Awaitable
-
-MaybeAsync = T | Awaitable[T]
-
-async def process_value[T](value: MaybeAsync[T]) -> T:
-    return await value if isinstance(value, Awaitable) else value
 ```
 
 ---
@@ -729,36 +585,6 @@ requestAnimationFrame((timestamp) => {
 queueMicrotask(() => {
   console.log("Microtask");
 });
-```
-
-### Python 对比
-
-```python
-import asyncio
-
-# Python 延迟
-async def delay(ms: float):
-    await asyncio.sleep(ms / 1000)
-
-# Python 定时器
-async def example():
-    # asyncio.sleep（类似 setTimeout）
-    await asyncio.sleep(1)
-    print("After 1 second")
-    
-    # 创建任务延迟执行
-    async def delayed():
-        print("Delayed execution")
-    
-    task = asyncio.create_task(delayed())
-    await asyncio.sleep(0)  # 让任务执行
-
-# Python 没有 setInterval
-# 使用 while 循环实现
-async def interval(ms: float, fn):
-    while True:
-        await asyncio.sleep(ms / 1000)
-        fn()
 ```
 
 ---
@@ -841,26 +667,6 @@ stream
       console.log("Received:", chunk);
     },
   }));
-```
-
-### Python 对比
-
-```python
-# Python 异步读取文件
-import aiofiles
-
-async def read_file(path: str) -> list[str]:
-    lines = []
-    async with aiofiles.open(path, mode='r') as f:
-        async for line in f:
-            lines.append(line.strip())
-    return lines
-
-# Python 异步生成器（类似 Node.js 流）
-async def read_in_chunks(path: str, chunk_size=1024):
-    async with aiofiles.open(path, mode='rb') as f:
-        while chunk := await f.read(chunk_size):
-            yield chunk
 ```
 
 ---
@@ -981,38 +787,4 @@ const fetchUserCached = asyncCache((id: number) => fetchJSON<User>(`/api/users/$
 
 const userData = await fetchUserCached(1);  // 实际请求
 const userData2 = await fetchUserCached(1);  // 缓存命中
-```
-
-### Python 对比
-
-```python
-import asyncio
-from functools import wraps
-import time
-
-# Python 异步缓存
-def async_cache(ttl_seconds=60):
-    def decorator(fn):
-        cache = {}
-        
-        @wraps(fn)
-        async def wrapper(*args, **kwargs):
-            key = (args, tuple(kwargs.items()))
-            cached = cache.get(key)
-            
-            if cached and time.time() - cached["timestamp"] < ttl_seconds:
-                return cached["value"]
-            
-            value = await fn(*args, **kwargs)
-            cache[key] = {"value": value, "timestamp": time.time()}
-            return value
-        
-        return wrapper
-    return decorator
-
-@async_cache(ttl_seconds=60)
-async def fetch_user(id: int) -> dict:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"/api/users/{id}") as response:
-            return await response.json()
 ```
