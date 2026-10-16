@@ -8,11 +8,10 @@
 1. [KSampler 核心参数总览](#一ksampler-核心参数总览)
 2. [采样器 sampler_name 详解](#二采样器-sampler_name-详解)
 3. [调度器 scheduler 详解](#三调度器-scheduler-详解)
-4. [采样器 + 调度器组合推荐表](#四采样器--调度器组合推荐表)
-5. [extra-sample-args 高阶参数详解](#五extra-sample-args-高阶参数详解)
-6. [7 大模型推荐参数组合与优缺点](#六7-大模型推荐参数组合与优缺点)
-7. [常见故障排错速查表](#七常见故障排错速查表)
-8. [sd-cpp 完整命令示例](#八sd-cpp-完整命令示例)
+4. [extra-sample-args 高阶参数详解](#四extra-sample-args-高阶参数详解)
+5. [参数组合推荐与常见故障排错](#五参数组合推荐与常见故障排错)
+6. [sd-cpp 完整命令示例](#六sd-cpp-完整命令示例)
+7. [附录：核心坑点清单汇总](#附录核心坑点清单汇总)
 
 ---
 
@@ -55,6 +54,22 @@
 4. **cfg 是每一步迭代都生效的约束**：每一轮去噪都用 cfg 拉扯正负提示词。cfg 不替代 steps，哪怕 steps 很高 cfg 过高依然崩坏。Flux 系列天生 cfg 数值要低。
 
 5. **seed 只决定初始噪声，其他参数全部改变图像**：seed 不变，改 steps/cfg/sampler/scheduler/denoise，图像完全不一样。只有全部参数一模一样，同 seed 才出相同图。
+
+### denoise / strength 通俗原理（简明版）
+
+> `denoise`（ComfyUI KSampler）= `--strength`（sd-cpp），是同一个参数。sigma 代表噪声强度，sigma=0 为最终成品。
+
+1. **文生图**：起点 = 满噪声（最大 sigma），从头去噪到 0，完整跑完所有 steps。
+   - ComfyUI：denoise 固定 **1.0**（latent 输入 EmptyLatentImage 空白潜图）
+   - sd-cpp：**不写 `--init-img`**，此时 `--strength` 无效，自动等同 1.0
+2. **图生图**：先把原图编码成 latent，再**加噪声到某个 sigma 强度**，从该中间点去噪到 0。**denoise 数值 = 给原图叠加的起始噪声强度**（不是去噪力度）：
+   - denoise=1.0：原图被完全噪声覆盖 → 等价文生图
+   - denoise=0.7：保留大体轮廓，细节大幅重绘
+   - denoise=0.4：只微调色彩细节，主体结构不动
+   - denoise=0：完全不改动
+   - ComfyUI：latent 接 `VAEEncode` 原图，KSampler 填 denoise；sd-cpp：`--init-img 原图.png --strength 0.6`（数值 0~1 两软件通用）
+
+> 本质：denoise 决定**从 sigma 序列的哪个位置开始采样**（取后半段），steps 决定序列长度；denoise 越大，起始 sigma 越大、原图保留越少、改动越多。
 
 ---
 
@@ -118,27 +133,11 @@ scheduler 输出一串 sigma 噪声数值序列，长度等于 steps；sigma 从
 
 ---
 
-## 四、采样器 + 调度器组合推荐表
-
-| 使用场景 | sampler_name | scheduler | 推荐 steps | cfg_scale | sd-cpp 对应参数片段 |
-|---|---|---|---|---|---|
-| SD1.5 通用高质量（可复现） | dpm++2m | karras | 20-28 | 6-7 | `--sampling-method dpm++2m --scheduler karras --steps 24 --cfg-scale 7` |
-| SDXL 通用高质量（可复现） | dpm++2mv2 | karras | 22-30 | 6-7.5 | `--sampling-method dpm++2mv2 --scheduler karras --steps 26 --cfg-scale 7` |
-| SD1.5 艺术氛围感（随机） | euler_a | karras | 20-25 | 7 | `--sampling-method euler_a --scheduler karras --steps 22 --cfg-scale 7` |
-| Flux-dev/schnell 官方 | euler | flux | 20-28 | 3-4 | `--sampling-method euler --scheduler flux --steps 24 --cfg-scale 3.5` |
-| LCM 快速出图 | lcm | lcm | 4-8 | 1-2 | `--sampling-method lcm --scheduler lcm --steps 6 --cfg-scale 1.5` |
-| 图生图重绘（denoise=0.4-0.7） | dpm++2m | karras | 20-25 | 6-7 | `--strength 0.6 --init-img input.png` |
-
----
-
-## 五、extra-sample-args 高阶参数详解
+## 四、extra-sample-args 高阶参数详解
 
 ### 通俗理解
 
 `--extra-sample-args` 是**采样器高级微调参数**，以 `key=val,key2=val2` 逗号分隔传给采样算法。
-
-> ⚠️ **基础 KSampler 节点看不到这些高级参数**，ComfyUI 要用自定义采样器节点（SamplerCustom / SamplerDPMPP_2M_SDE 等），普通 K 采样器 UI 没有输入框。
-> 适用范围：**仅部分采样器支持**；普通确定性采样器（euler/dpm++2m 默认 ODE）很多参数不生效；SDE / ancestral 祖先采样器才会用到 eta、s_churn 等。
 
 ### 使用语法
 
@@ -178,9 +177,6 @@ scheduler 输出一串 sigma 噪声数值序列，长度等于 steps；sigma 从
 
 > 典型用法：`s_churn=0.1, s_tmin=0.02, s_tmax=1.0, s_noise=1.0` → 细节质感更强，但不会在收尾阶段乱加噪。
 
-#### 3. gamma、alpha/beta、r：小众专用参数
-只适配特定采样器/调度器，普通 SD1.5/XL/Flux 日常生成基本不用碰。
-
 ### ComfyUI 如何设置这些参数
 
 > ⚠️ **原生 KSampler 节点没有这些输入框！** 只能填 seed/steps/cfg/sampler/scheduler/denoise。
@@ -199,16 +195,22 @@ scheduler 输出一串 sigma 噪声数值序列，长度等于 steps；sigma 从
 ```
 ComfyUI 工作流：`SamplerDPMPP_2M_SDE(eta=0.6)` → sampler；`KarrasScheduler(s_churn=0.1, s_tmin=0.02)` → scheduler；两者接入 SamplerCustom。
 
-### 联动关系 & 坑点
-
-1. **参数有采样器/调度器绑定，填错直接无效**：给普通 `euler` 采样器设 `eta=0.7` 完全不起效果；给 `normal(discrete)` 调度器设 `s_churn` 也无效，s_churn 只认 karras。
-2. `s_churn` 和 `eta` 都会增加随机性，叠加使用图像变化更大，seed 复现失效。
-3. eta/s_churn 太高易出现杂色、物体畸形、边缘破碎，尤其高 CFG 时。
-4. Flux 模型一般不建议开 s_churn；Flux 原生 flux 调度器不支持 s_churn（s_churn 是 karras 专属）。
-
 ---
 
-## 六、7 大模型推荐参数组合与优缺点
+## 五、参数组合推荐与常见故障排错
+
+### 5.1 通用采样器 + 调度器组合推荐表
+
+| 使用场景 | sampler_name | scheduler | 推荐 steps | cfg_scale | sd-cpp 对应参数片段 |
+|---|---|---|---|---|---|
+| SD1.5 通用高质量（可复现） | dpm++2m | karras | 20-28 | 6-7 | `--sampling-method dpm++2m --scheduler karras --steps 24 --cfg-scale 7` |
+| SDXL 通用高质量（可复现） | dpm++2mv2 | karras | 22-30 | 6-7.5 | `--sampling-method dpm++2mv2 --scheduler karras --steps 26 --cfg-scale 7` |
+| SD1.5 艺术氛围感（随机） | euler_a | karras | 20-25 | 7 | `--sampling-method euler_a --scheduler karras --steps 22 --cfg-scale 7` |
+| Flux-dev/schnell 官方 | euler | flux | 20-28 | 3-4 | `--sampling-method euler --scheduler flux --steps 24 --cfg-scale 3.5` |
+| LCM 快速出图 | lcm | lcm | 4-8 | 1-2 | `--sampling-method lcm --scheduler lcm --steps 6 --cfg-scale 1.5` |
+| 图生图重绘（denoise=0.4-0.7） | dpm++2m | karras | 20-25 | 6-7 | `--strength 0.6 --init-img input.png` |
+
+### 5.2 7 大模型推荐参数组合与优缺点
 
 > 区分：**Krea2/Z-image/Boogu/Qwen-Image-Edit/FLUX2 = 图像模型；Wan2.2 / LTX2.3 = 视频模型**
 > 提示：这类 DiT 类现代模型 **CFG 普遍偏低，不能沿用 SD1.5 的 7~8**；Turbo 蒸馏模型一般 CFG=1（关闭引导，负面提示基本无效）。
@@ -223,24 +225,24 @@ ComfyUI 工作流：`SamplerDPMPP_2M_SDE(eta=0.6)` → sampler；`KarrasSchedule
 | **Wan2.2（文生视频）**<br>阿里万相视频模型 | euler + wan，steps 20-28，cfg 3.0-4.0，denoise 0.6 | `--sampling-method euler --scheduler wan --steps 24 --cfg-scale 3.5` | 1. **人物动作、微表情、手部动态开源最强**；2. 电影级光影构图、镜头运镜可控；3. 物理逻辑强，复杂运动不易崩；4. 5B 小版本 4090 可跑，Apache2.0 商用；5. 人物面部稳定性好 | 1. 原生不带音频，需额外音频模型；2. 长视频（>5 秒）人物一致性缓慢下滑；3. 原生分辨率上限 720P；4. 提示词对镜头语言要求高 | 动态人物短片、影视分镜、动作镜头、图生视频、人物表演类短视频 |
 | **LTX2.3（Lightricks 视频）**<br>音视频一体 | ✅Full：Res-2-S / euler + ltx2，steps 20-40，cfg 3.0-3.5，stg_scale 0.8<br>✅Distilled：euler + ltx2，steps 4-8，cfg 1.0 | full：`--steps 30 --cfg-scale 3.3`<br>distill：`--steps 8 --cfg-scale 1.0`<br>stg_scale 通过 extra-sample-args 传入 | 1. **音画原生一体**，出视频同时出同步音频，唇形匹配强；2. 生成速度比 Wan2.2 快；3. 支持首/末帧参考，镜头过渡顺滑；4. 原生竖屏适合短视频；5. 支持 STG 时空引导提升帧间一致性 | 1. 复杂肢体动作弱于 Wan2.2，大幅肢体易扭曲；2. 人物跨帧身份一致性一般；3. 长视频易出现静态 PPT 画面；4. 显存开销大 | 短视频、口播类视频、带声音短片、镜头缓慢运镜、首尾帧过渡视频 |
 
-### 补充关键说明
+#### 补充关键说明
 
-#### 1. 模型调度器必须配对（重中之重）
+##### 1. 模型调度器必须配对（重中之重）
 - FLUX2 → **flux 调度器**，不要强行 karras，易色彩脏、透视崩坏
 - LTX2.3 → ltx2 专属调度器；Wan2.2 使用 wan 专用 sigma 调度
 - Krea2 Turbo / Z-image Turbo：蒸馏模型原生搭配 simple/zimage 调度，**不适合 dpm++ 系列采样器**
 
-#### 2. Turbo/蒸馏模型共性坑
+##### 2. Turbo/蒸馏模型共性坑
 - steps 极少（4/8 步），**cfg=1.0 等价关闭 CFG 引导**，**负面提示词基本不起作用**，不要写长 neg。
 - 不要盲目增加 steps，蒸馏模型训练锁定低步数，加多不提升画质反而变差。
 
-#### 3. 视频模型特殊参数（STG 时空引导，LTX2.3 特有，extra-sample-args）
+##### 3. 视频模型特殊参数（STG 时空引导，LTX2.3 特有，extra-sample-args）
 `stg_scale=0.8,stg_blocks=[29]` 控制帧间画面一致性；
 - stg_scale 太高：画面不动变 PPT；
 - stg_scale 太低：人物面部疯狂漂移变形。
 sd-cpp 写法：`--extra-sample-args stg_scale=0.8`
 
-#### 4. 模型选型快速决策
+##### 4. 模型选型快速决策
 - 人像写真优先：**Z-image**
 - 全能商业图、文字、产品图：**FLUX2**
 - 带文字海报、胶片写实质感：**Krea2**
@@ -251,9 +253,9 @@ sd-cpp 写法：`--extra-sample-args stg_scale=0.8`
 
 ---
 
-## 七、常见故障排错速查表
+### 5.3 常见故障排错速查表
 
-### 总览故障对照表
+#### 总览故障对照表
 
 | 故障现象 | 优先排查项 | 图像模型（Krea2/Z-image/Boogu/Qwen-Image-Edit/FLUX2） | 视频模型（Wan2.2 / LTX2.3） | 禁止操作（坑） |
 |---|---|---|---|---|
@@ -262,58 +264,58 @@ sd-cpp 写法：`--extra-sample-args stg_scale=0.8`
 | **文字乱码、文字扭曲、字母粘连** | 模型选型、CFG、steps、分辨率 | ✅首选 Krea2 / FLUX2（文字最强，Z-image/Qwen 文字弱）；✅steps≥24；CFG 3.0-3.8 太高文字融化；✅提升分辨率，小字必须更高像素；✅不要开高 eta/s_churn 会撕碎文字；✅Boogu 文字一般复杂文字不选用 | ✅视频内文字难度极高，尽量放静态背景；✅Wan2.2：CFG 不超过 3.5，steps≥24；✅LTX2.3 不适合动态文字易逐帧乱码 | ❌Z-image 不要生成带大量英文/标识海报；❌Turbo 版本（8/4 步）文字天生差不适合文字场景 |
 | **帧间漂移（视频专属：人脸乱跑、物体形变闪烁）** | STG 参数、denoise、CFG、参考图、extra-sample-args | ——（图像模型无帧间漂移） | ✅Wan2.2：①图生视频 denoise 降到 0.4-0.5（越大漂移越严重）；②CFG 控制 3.0-3.5 过高帧间抖动；③用首帧参考固定主体<br>✅LTX2.3：①调高 stg_scale=0.7-0.9；②steps 提到 30 左右；③denoise 不要>0.6；④开首尾帧约束 | ❌stg_scale>1.0 画面变静态 PPT；❌denoise>0.8 图生视频主体逐帧变形 |
 
-### 分模型细化调参指引
+#### 分模型细化调参指引
 
-#### 1. Krea2（Turbo / Raw）
+##### 1. Krea2（Turbo / Raw）
 | 故障 | 调参方案 | sd-cpp extra-sample-args |
 |---|---|---|
 | 画面糊 | Raw 版 steps 24-28，CFG 3.5-4.5；Turbo 糊属正常（牺牲细节换速度），改用 Raw 版 | 去掉 `mu=1.15` 尝试降低扰动 |
 | 人物畸形 | CFG 降到 3.0-3.8，不要>4.5；图生图 denoise≤0.7 | eta=0，关闭额外随机噪声 |
 | 文字乱码 | 必须 Raw 版不要 Turbo；steps≥24；分辨率≥1280；CFG 3.2 | s_churn=0，不加扰动噪声撕碎文字 |
 
-#### 2. Z-image（人像专用）
+##### 2. Z-image（人像专用）
 | 故障 | 调参方案 |
 |---|---|
 | 画面糊 | Quality 完整版 steps=20，CFG=3.0；不要用 Turbo 做精细写真 |
 | 人物畸形 | CFG **不要超过 3.2**，Z-image 对高 CFG 非常敏感；denoise 控制 0.4-0.6 |
 | 文字乱码 | **Z-image 天生文字弱**，复杂文字场景直接换 Krea2/FLUX2，调参改善有限 |
 
-#### 3. Boogu
+##### 3. Boogu
 | 故障 | 调参方案 |
 |---|---|
 | 画面糊 | steps 提升至 26-28，CFG=3.0-3.5，采样 dpm++2m + karras |
 | 人物畸形 | CFG 降到≤3.5；Boogu 强项是场景，人像上限不如 Z-image |
 | 文字乱码 | 文字能力中等，尽量避免极小字体，提高分辨率 |
 
-#### 4. Qwen-Image-Edit（图像编辑）
+##### 4. Qwen-Image-Edit（图像编辑）
 | 故障 | 调参方案 |
 |---|---|
 | 画面糊 | steps=18-20，CFG=2.5-3.0；编辑场景 denoise 不要低于 0.4 |
 | 人物畸形 | denoise **不要>0.7**！Qwen 是编辑模型，大幅重绘破坏原图结构，denoise 建议 0.4-0.6 |
 | 文字乱码 | 中文尚可英文弱；优先修改已有文字，不要凭空生成大量文字 |
 
-#### 5. FLUX2（Dev/Klein）
+##### 5. FLUX2（Dev/Klein）
 | 故障 | 调参方案 |
 |---|---|
 | 画面糊 | Dev steps=24-28，CFG=3.2-3.8；**调度器必须 flux 禁止 karras**；Klein 蒸馏版天生细节弱改用 Dev |
 | 人物畸形 | CFG 上限 3.8，超过极易色彩爆炸肢体崩坏；不要开 s_churn/eta |
 | 文字乱码 | FLUX2 文字很强；提升分辨率；steps≥24，CFG 3-3.5，关闭所有额外随机扰动 |
 
-#### 6. Wan2.2（视频）
+##### 6. Wan2.2（视频）
 | 故障 | 调参方案 |
 |---|---|
 | 画面糊 | steps 24-28，CFG 3.2-3.8，分辨率不要强行拉超原生上限 |
 | 人物畸形 | CFG 降到 3.0-3.5；图生视频 denoise≤0.6；负面词增加肢体畸变描述 |
 | 帧间漂移人脸闪烁 | denoise 降低 0.4-0.5；使用首帧参考图；CFG 不要过高；缩短视频时长 |
 
-#### 7. LTX2.3（音视频一体）
+##### 7. LTX2.3（音视频一体）
 | 故障 | 调参方案 | sd-cpp extra-sample-args |
 |---|---|---|
 | 画面糊 | Full 版 steps=28-35，CFG=3.0-3.3；stg_scale 不要>0.9 过高画面僵硬模糊 | `stg_scale=0.7` |
 | 人物畸形 | stg_scale 不要>0.9；CFG≤3.3；denoise≤0.6 | `stg_scale=0.7` |
 | 帧间漂移 | **提高 stg_scale 0.7-0.9** 增强跨帧一致性；denoise 降低；开首尾帧参考 | `stg_scale=0.8` |
 
-### 快速排查逻辑（固定顺序节省试错）
+#### 快速排查逻辑（固定顺序节省试错）
 
 1. ✅ **调度器是否匹配模型**（最高优先级！很多糊、畸形根源是调度器选错，如 FLUX2 强行 karras）
 2. ✅ CFG 是不是太高（人物畸形头号元凶，DiT 新模型不能沿用 SD1.5 的 7~8）
@@ -322,7 +324,7 @@ sd-cpp 写法：`--extra-sample-args stg_scale=0.8`
 5. ✅ extra-sample-args：eta、s_churn、stg_scale 这类随机扰动参数，追求稳定/文字/固定人物时全部关掉
 6. ✅ 分辨率：小字、精细细节必须提高分辨率，单纯调参救不了过低分辨率的文字糊
 
-### 一句话口诀
+#### 一句话口诀
 
 > 糊图先查调度器，适度加步控 CFG
 > 人物畸形降 CFG，denoise 别高保结构
@@ -331,7 +333,7 @@ sd-cpp 写法：`--extra-sample-args stg_scale=0.8`
 
 ---
 
-## 八、sd-cpp 完整命令示例
+## 六、sd-cpp 完整命令示例
 
 ### 示例 1：SDXL 通用高质量（dpm++2mv2 + karras，图生图）
 
