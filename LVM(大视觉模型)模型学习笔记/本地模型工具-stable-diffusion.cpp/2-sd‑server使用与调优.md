@@ -366,7 +366,7 @@ Qwen-Image 图编（换图里人物）：
 > 
 > 解决`No LoRA entries were returned by capabilities`：sd-server启动命令增加 `--lora-model-dir 你的lora文件夹路径`，重启服务，WebUI才能读取LoRA列表。
 
-### IMAGE INPUTS（图像输入区，Qwen-Image重点）
+### IMAGE INPUTS
 
 | 参数名称 | 参数说明与特点 | 默认值 | 建议值 |
 | --- | --- | --- | --- |
