@@ -118,54 +118,6 @@
 4. 860M APU固定推荐必开性能参数：`--diffusion-fa --vae-tiling --temporal-tiling --offload-to-cpu --auto-fit on`。
 
 
-## 通俗讲解：clip_l / clip_g / clip_vision_g / sd35_clip_g / sd35_clip_l / t5xxl / VAE / LoRA / Embedding / connectors
-
-
-一句话总纲：**文本编码器负责读懂文字提示词；视觉编码器看懂参考图；VAE（解码器）负责把 AI 潜空间数字画面还原成真实图片 / 视频；LoRA/Embedding 是小插件；connectors 是模型之间的翻译转换器**
-
-| 名称 | 通俗作用 | 和模型关系 | sd.cpp怎么用 |
-| --- | --- | --- | --- |
-| **clip_l** | CLIP文本编码器（L版本，轻量）   把**文字提示词**转换成AI能看懂的数字向量。 | SDXL、SD3系列用；   ⚠️ `clip_l` ≠ `sd35_clip_l`，二者权重不同，不能互换。 | 启动参数 `--clip_l 路径.gguf`   SDXL：clip_l + clip_g 成对使用 |
-| **clip_g** | CLIP文本编码器（G版本，大版本）   同样解析文字，理解能力更强，和clip_l成对配套。 | SDXL原版专用；**不是SD3.5的clip_g**，不要和sd35_clip_g混用。 | 启动参数 `--clip_g 路径.gguf`   SDXL必须同时加载 clip_l + clip_g |
-| **sd35_clip_l** | SD3.5专用clip_l文本编码器   专门为SD3.5训练的clip_l，结构和原版SDXL clip_l不一样。 | **仅SD3.5系列模型使用**，不能给SDXL用。 | `--clip_l sd35_clip_l.gguf` |
-| **sd35_clip_g** | SD3.5专用clip_g文本编码器   SD3.5专属的clip_g。 | **仅SD3.5系列模型使用**，不能给SDXL用。 | `--clip_g sd35_clip_g.gguf`   SD3.5：clip_l+clip_g + t5xxl三者一起加载 |
-| **clip_vision_g** | CLIP视觉编码器（图像版CLIP）   **不读文字，读图片**：把参考图片转为向量。 | 配合IP-Adapter使用；   用于图生图参考风格、参考人物。 | `--clip_vision 路径.gguf`   **必须搭配 --ip-adapter 模型参数**，文生图不需要 |
-| **t5xxl（umt5-xxl）** | 超大T5文本编码器   理解长提示词、复杂语义，Wan2.2、SD3、HunyuanVideo视频模型依赖。   CLIP擅长理解风格，T5擅长理解长句子、动作描述。 | Wan2.2（T2V/TI2V）、SD3/SD3.5、HunyuanVideo视频模型**必选**；SDXL不需要。 | `--t5xxl umt5-xxl.gguf`   Wan2.2生成视频，缺少它会提示词失效 |
-| **VAE** | 图像/视频解码器   Diffusion主干输出的是一堆抽象潜空间数字，VAE把这堆数字**还原成肉眼可见图片/视频帧**。   没有VAE，AI只会输出一堆噪点，看不到画面。 | **强绑定模型！VAE不能跨模型混用**   Wan用Wan的VAE，FLUX用FLUX，SDXL用SDXL。 | `--vae 路径.safetensors` 或gguf   视频模型必须指定VAE；可搭配`--vae-tiling`省显存 |
-| **LoRA（小模型插件）** | 轻量化微调插件，小文件。   不改变主干大模型本身，只增加风格、人物、物体、动作。   好比给PS装滤镜/人物素材。 | 适配主干模型：FLUX的LoRA只能给FLUX，Wan的LoRA只能给Wan。 | `--lora-model-dir D:\xxx\loras`   自动扫描目录下所有lora文件；**在WebUI/API请求里选择启用哪个LoRA**，不是启动时直接激活 |
-| **Embedding（Textual Inversion）** | 文本嵌入词，很小的文件。   训练出来的“特殊关键词”，用来固定特定人脸/物体/风格，直接写在提示词里调用。 | 同样绑定基础模型，SD1.5的embedding不能给FLUX用。 | `--embd-dir D:\xxx\embeddings`   加载后，直接在正向提示词写embedding名字即可生效 |
-| **connectors（embeddings-connectors）** | 嵌入连接器   相当于**适配器**，用来连接不同类型编码器和主干模型之间的向量格式。   简单理解：转接头，让文本编码器输出向量能被主干模型读懂。 | **LTX系列视频模型专用**，Wan、SD3.5、FLUX不需要。 | `--embeddings-connectors 连接器文件.gguf`   只有跑LTX视频才需要加，其他模型不要加这个参数 |
-
-### 重点区分（容易混淆）
-
-1. **clip_g（SDXL） vs sd35_clip_g**
-二者名字都叫 G，但**不能混用**。SDXL 的 clip_g 是老版本 CLIP；sd35_clip_g 是 SD3.5 单独训练的 CLIP，结构不同，强行加载会画面崩坏。
-2. **clip_g（文本） vs clip_vision_g（视觉）**
-   - clip_g：**读文字**（提示词）
-   - clip_vision_g：**读图片**（参考图），完全两类东西
-3. CLIP 系列 vs T5XXL
-   - CLIP：擅长风格、画面描述，短提示词，体积相对小（SDXL 用）
-   - T5XXL：超大文本模型，擅长超长、复杂、精细描述，Wan 视频、SD3、Qwen-Image 依赖它，显存占用高
-
-### 简单例子（帮你串起来）
-
-SDXL 文生图：
-`clip_l + clip_g` 读取你的提示词 → 扩散模型生成潜数据 → **VAE 解码成图片**
-
-Wan2.2 文生视频：
-`t5xxl`读取提示词 → Wan 扩散模型生成视频潜张量 → **VAE 解码成视频**
-
-Qwen-Image 图编（换图里人物）：
-`llm+clip_vision_g`读取参考图 + 文字指令 → connector 转换向量 → 扩散模型生成新潜图 → VAE 解码图片
-
-### 适配 sd.cpp (sd-server) 的使用要点
-
-- Wan2.2 视频：**只使用 t5xxl 做文本编码，不用 clip_g/clip_l**
-- Qwen-Image：LLM + clip_vision_g + connectors + VAE 整套一起配合
-- FLUX.2 Klein（Flux2-klein-9B）：文本编码器是 Qwen3 LLM，图生图 / 参考图能力是由这个 Qwen3 LLM 本身自带的视觉能力承担，不再单独拆出独立的 `clip_vision_g` 文件，所以启动命令不用写 `--clip_vision_g`。
-- SD3 / SD3.5： 原生架构里，**图生图 / 参考图不是靠独立的 `clip_vision_g` 视觉编码器**，它是直接把原图编码进**扩散模型本身的潜空间**，用潜变量输入，不需要单独视觉 CLIP。
-
-
 ## sd-server WebUI 视频生成参数详细说明
 
 以下参数均为**单次请求生效**，不修改服务端全局配置，适用于 stable-diffusion.cpp 所有模型（图片/视频生成），部分参数仅特定模型生效会单独标注。
