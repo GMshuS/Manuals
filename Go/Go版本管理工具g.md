@@ -26,6 +26,8 @@
   ```shell
   # 建议安装前清空`GOROOT`、`GOBIN`等环境变量
   $ curl -sSL https://raw.githubusercontent.com/voidint/g/master/install.sh | bash
+  或者使用 ghproxy 代理
+  $ curl -sSL https://ghproxy.com/https://raw.githubusercontent.com/voidint/g/master/install.sh | bash
   $ cat << 'EOF' >> ~/.bashrc
   # 可选。检查g别名是否被占用
   if [[ -n $(alias g 2>/dev/null) ]]; then
