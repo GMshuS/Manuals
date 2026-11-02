@@ -66,13 +66,36 @@ sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 -W 720
 
 P：严格保留参考图1中男孩的脸部与奥特曼铠甲外观、身份不变，仅将其放入城市战斗场景，调整为进攻对峙姿态（男孩朝右前方45度、相机位于其左前方的3/4侧身视角），并生成宇宙怪兽艾雷王与正在被破坏的城市背景；艾雷王为黄褐色带黑色条纹的爬行类巨大怪兽，头生尖角，长尾，发光双眼，周身电弧；倒塌建筑、碎裂街道、烟尘，戏剧化战斗光影，真人实景特摄风格，电影感，高画质，细节清晰
 N：畸变，模糊，噪点，文字，水印，低质量，铠甲改变，面部扭曲，肢体畸形，多余手指，怪兽畸形，城市穿帮，比例失调，塑料感，画面杂乱
-sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 4 -W 1280 -H 720 --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu --strength 0.75 -p "严格保留参考图1中身穿奥特曼铠甲的亚洲小男孩的外观与身份不变，与宇宙怪兽艾雷王形成对峙以阻止其破坏城市，进攻形态攻击姿态，小男孩左侧45度角镜头；艾雷王为紫色鳞甲长尾怪兽，头顶发光角，凶恶姿态；城市废墟战场背景，建筑破损，真人实景特摄战斗场面，电影级光影，戏剧性打光，高画质，细节丰富，氛围紧张" -n "畸变，模糊，噪点，文字，水印，低质量，小男孩外观改变，肢体畸形，多余手指，艾雷王形态错误，比例失调，画面杂乱，穿帮" -r asserts\i2i_zrh.png -o outputs\img2img\i2i_zrh-vs-alw.png
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 4 -W 1280 -H 720 --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu --strength 0.75 --ref-image-args "index=0,weight=0.7,model=ip-adapter-plus,start=0.0,end=0.8" -p "严格保留参考图1中身穿奥特曼铠甲的亚洲小男孩的外观与身份不变，与宇宙怪兽艾雷王形成对峙以阻止其破坏城市，进攻形态攻击姿态，小男孩左侧45度角镜头；艾雷王为紫色鳞甲长尾怪兽，头顶发光角，凶恶姿态；城市废墟战场背景，建筑破损，真人实景特摄战斗场面，电影级光影，戏剧性打光，高画质，细节丰富，氛围紧张" -n "畸变，模糊，噪点，文字，水印，低质量，小男孩外观改变，肢体畸形，多余手指，艾雷王形态错误，比例失调，画面杂乱，穿帮" -r asserts\i2i_zrh.png -o outputs\img2img\i2i_zrh-vs-alw.png
+
+2.3 洗图
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl1.jfif -o outputs\img2img\i2i_r_洗图-strength=1.png 
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl1.jfif -o outputs\img2img\i2i_i_洗图-strength=1.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0.1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl2.jfif -o outputs\img2img\i2i_i_洗图-girl2-strength=0.1.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0.2 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl2.jfif -o outputs\img2img\i2i_i_洗图-girl2-strength=0.2.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0.3 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl2.jfif -o outputs\img2img\i2i_i_洗图-girl2-strength=0.3.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0.4 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl2.jfif -o outputs\img2img\i2i_i_洗图-girl2-strength=0.4.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s 8848 --strength 0.5 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl2.jfif -o outputs\img2img\i2i_i_洗图-girl2-strength=0.5.png
+
+2.4 扩图
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0 -W 1024 -H 768 --image-preprocess "target=ref,mode=fit-pad,width=1024,height=768,pad_color=#00FF00" --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -p "移除绿色区域" -r asserts\girl3.jfif -o outputs\img2img\i2i_i_横向扩图.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0 --image-preprocess "target=ref,index=0,mode=crop-resize,filter=lanczos,antialias=true,anchor=center" --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl3.jfif -o outputs\img2img\i2i_r_扩图-crop-resize.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0 --image-preprocess "target=ref,index=0,mode=crop-resize,filter=lanczos,antialias=true,anchor=center" --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl3.jfif -o outputs\img2img\i2i_r_扩图-crop-resize.png
 
 2.3 三视图
 1）文生三视图
 P：宇宙怪兽艾雷王，蓝色身体带黑色纵向条纹，头顶两根触角，背脊锯齿状背鳍，长尾末端发光球体，标准三视图设定表，同一角色横向并排三栏，正面、侧面、背面，各栏独立不重叠，白色细分割线分隔，中性站姿，四肢自然展开，长尾完整入镜不遮挡，全身完整入镜，纯白背景，均匀柔光，光影一致，平视镜头，湿润鳞状皮肤质感，发光尾球呈半透明荧光，写实特摄怪兽风格，高清，轮廓清晰，构图干净NNDN：肢体畸形，五官扭曲，身体比例错误，多余肢体，画面互相融合重叠，不同个体，多余个体，动态姿势，透视混乱，文字，水印，logo
 sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 4 -W 1024 -H 800‬ --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -p "Space Monster Eleking, blue body with black vertical stripes, two antennae on the head, serrated dorsal fins along the spine, glowing sphere at the tail tip, character turnaround sheet, three horizontal panels, front view, side view, back view, independent panels not overlapping, thin white divider lines, neutral standing pose, limbs spread naturally, long tail fully in frame without occlusion, full body in frame, pure white background, soft even lighting, consistent lighting across panels, eye-level camera, wet scaly leathery skin texture, translucent glowing tail orb, realistic tokusatsu monster style, high definition, clean composition" -n "deformed limbs, distorted facial features, wrong body proportions, extra limbs, merged panels, different creatures, extra creatures, dynamic pose, broken perspective, text, watermark, logo" -o outputs\img2img\3v_alw.png 
-
 
 2）真人三视图
 - P：严格以第1张参考图的主体形象为准，保留关键特征，同一主体，标准 T-pose 站姿，双臂自然平举，正面视角、侧面视角、背面视角横向并排，独立分栏，白色分割线分隔，画面互不重叠，纯白背景，均匀柔光，全场光影一致，全身完整入镜，平视视角，标准人像焦段，自然肤质与真实服饰材质，写实摄影风格，高清，轮廓清晰，角色资产设定图，构图干净
@@ -104,3 +127,19 @@ masterpiece, best quality, 1girl, red hair, big eyes, beautiful face, detailed f
 
 ##  tup fang
 sd-cli.exe -M upscale --init-img C:\Users\guosen\AppData\Local\Temp\gradio\1a44f0f73c92e9c94d56f2d1cc0c54b5e024bda9deec749bb725ed447a39adc3\30.png --upscale-model models\upscale_models\RealESRGAN_x4plus.pth -W 800 -H 608 --upscale-repeats 1 --upscale-tile-size 128 -o outputs\upscale\29.png
+
+
+============================
+ 
+使用--init-img或者--ref-image时，输出图片的宽高（-H、-W）要怎么设置，如果宽高跟原图不一致会有什么影响?
+
+`sd系列、krea2、z-image、boogu、qwen-image-2.1、FLUX2、Moss Image`等图片模型如何设置`--init-img、--end-img、--mask、--ref-image、--ref-image-args、--img-cfg-scale、--image‑preprocess`等参数。尽量以表格展示
+
+--ref-image-args 深入详解 
+1. 它的子参数包括哪些 key； 
+2. 各个子参数 key 详解（包括：作用、取值范围与默认值，适用场景等） 
+尽量以表格展示，通俗易懂
+
+--img‑cfg‑scale 深入详解（作用、取值范围与默认值，适用场景等）
+
+pad 填充后的补边区域，绘图过程会绘制，达到扩图的目的吗？
