@@ -60,8 +60,6 @@ sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 4 -W 720
 2.2 图生图
 sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 4 -W 720 -H 1280 --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu --strength 0.75 -p "严格保留原图中的少女人物形象与外观特征（面容、发型、穿搭气质），仅替换场景与动作，将其置于开心逛街购物的情境中，保持人物身份一致，繁华商业步行街，两侧店铺橱窗流光，暖色街灯与霓虹，少女漫步或驻足，手中提着精致购物袋，笑容灿烂，神情愉悦，微风轻动发丝，生活化现代写实，自然肤质，高细节，氛围感" -n "五官扭曲，多余手指，肢体畸形，比例失调，塑料皮肤，畸变，模糊，噪点，文字，水印，低质量" -r asserts\OIP-C.jfif -o outputs\img2img\i2i_sngj.png
 
-sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 4 -W 720 -H 1280 --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu --strength 0.75 -p "严格保留参考图1中小男孩的头部与脸部不变，仅将身体服饰替换为迪迦奥特曼铠甲，调整姿态为双脚并拢笔直站立，背景替换为纯白色；银色与红紫色奥特曼铠甲，胸前蓝色彩色计时器，全身正面平视，均匀柔光，写实照片风格，高画质，细节清晰，边缘自然" -n "畸变，模糊，噪点，文字，水印，低质量，头部改变，面部扭曲，肢体畸形，多余手指，铠甲未还原，背景非纯白，比例失调" -r asserts\zrh.png -r asserts\djatm.png -o outputs\img2img\i2i_zrh_djatm.png 
-
 sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 -W 720 -H 1280 --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu --strength 0.75 -p "严格保留参考图1中小男孩的头部与脸部不变，仅将身体服饰替换为迪迦奥特曼铠甲，调整姿态为双脚并拢笔直站立，背景替换为纯白色；银色与红紫色奥特曼铠甲，胸前蓝色彩色计时器，全身正面平视，均匀柔光，写实照片风格，高画质，细节清晰，边缘自然" -n "畸变，模糊，噪点，文字，水印，低质量，头部改变，面部扭曲，肢体畸形，比例失调" -r asserts\zrh-header.png -o outputs\img2img\i2i_zrh-header.png 
 
 P：严格保留参考图1中男孩的脸部与奥特曼铠甲外观、身份不变，仅将其放入城市战斗场景，调整为进攻对峙姿态（男孩朝右前方45度、相机位于其左前方的3/4侧身视角），并生成宇宙怪兽艾雷王与正在被破坏的城市背景；艾雷王为黄褐色带黑色条纹的爬行类巨大怪兽，头生尖角，长尾，发光双眼，周身电弧；倒塌建筑、碎裂街道、烟尘，戏剧化战斗光影，真人实景特摄风格，电影感，高画质，细节清晰
@@ -70,9 +68,11 @@ sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 4 -W 128
 
 2.3 洗图
 
-sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl1.jfif -o outputs\img2img\i2i_r_洗图-strength=1.png 
+2.3.1 init-img 洗图
 
-sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl1.jfif -o outputs\img2img\i2i_i_洗图-strength=1.png
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl1.jfif -o outputs\img2img\i2i_r_洗图-strength=1.png  -- strength 对 -r 参数无效
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl1.jfif -o outputs\img2img\i2i_i_洗图-strength=1.png -- strength 为 1 则全部重绘，洗图工作流 strength 必须小于1，越小越接近原图
 
 sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0.1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl2.jfif -o outputs\img2img\i2i_i_洗图-girl2-strength=0.1.png
 
@@ -84,13 +84,30 @@ sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-
 
 sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s 8848 --strength 0.5 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -i asserts\girl2.jfif -o outputs\img2img\i2i_i_洗图-girl2-strength=0.5.png
 
+2.3.1 ref-image 洗图
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --img-cfg-scale 0.5 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl2.jfif -o outputs\img2img\i2i_r_洗图-girl2-imgcfgscale=0.5.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --img-cfg-scale 0.8 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl2.jfif -o outputs\img2img\i2i_r_洗图-girl2-imgcfgscale=0.8.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --img-cfg-scale 1.0 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl2.jfif -o outputs\img2img\i2i_r_洗图-girl2-imgcfgscale=1.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --img-cfg-scale 1.2 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl2.jfif -o outputs\img2img\i2i_r_洗图-girl2-imgcfgscale=1.2.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --img-cfg-scale 1.5 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl2.jfif -o outputs\img2img\i2i_r_洗图-girl2-imgcfgscale=1.5.png
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --img-cfg-scale 1.8 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl2.jfif -o outputs\img2img\i2i_r_洗图-girl2-imgcfgscale=1.8.png
+
+
 2.4 扩图
 
-sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0 -W 1024 -H 768 --image-preprocess "target=ref,mode=fit-pad,width=1024,height=768,pad_color=#00FF00" --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -p "移除绿色区域" -r asserts\girl3.jfif -o outputs\img2img\i2i_i_横向扩图.png
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0 -W 1024 -H 768 --image-preprocess "target=init,mode=fit-pad,width=1024,height=768,pad_color=#00FF00" --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -p "移除绿色区域" -i asserts\girl3.jfif -o outputs\img2img\i2i_i_扩图-girl3.png
 
-sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0 --image-preprocess "target=ref,index=0,mode=crop-resize,filter=lanczos,antialias=true,anchor=center" --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl3.jfif -o outputs\img2img\i2i_r_扩图-crop-resize.png
+2.5 图片编辑
 
-sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --strength 0 --image-preprocess "target=ref,index=0,mode=crop-resize,filter=lanczos,antialias=true,anchor=center" --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -r asserts\girl3.jfif -o outputs\img2img\i2i_r_扩图-crop-resize.png
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -p "将参考图中的背景改为白色，保持人物不变" -r asserts\zrh-header.png -o outputs\img2img\i2i_图片编辑_zrh-header-purebk.png 
+
+sd-cli.exe -M img_gen --sampling-method euler --scheduler flux2 --steps 6 --cfg-scale 1 -s -1 --diffusion-model models\unet\flux-2-klein-4b-Q4_0.gguf --vae models\vae\vae.safetensors --llm models\text_encoders\Qwen3-4B-Q4_K_M.gguf --embd-dir models\embeddings --backend cpu --params-backend *=cpu --offload-to-cpu -p "将参考图1中绿色圈出的头部替换为参考图2中的小男孩头部，并去掉绿圈" -r asserts\djatm-mask.png -r asserts\zrh-header-purebk.png -o outputs\img2img\i2i_图片编辑_zrh_djatm.png 
 
 2.3 三视图
 1）文生三视图
@@ -131,15 +148,41 @@ sd-cli.exe -M upscale --init-img C:\Users\guosen\AppData\Local\Temp\gradio\1a44f
 
 ============================
  
-使用--init-img或者--ref-image时，输出图片的宽高（-H、-W）要怎么设置，如果宽高跟原图不一致会有什么影响?
+--flow-shift
 
-`sd系列、krea2、z-image、boogu、qwen-image-2.1、FLUX2、Moss Image`等图片模型如何设置`--init-img、--end-img、--mask、--ref-image、--ref-image-args、--img-cfg-scale、--image‑preprocess`等参数。尽量以表格展示
+--skip-layers                            layers to skip for SLG steps (default: [7,8,9])
+--high-noise-skip-layers                 (high noise) layers to skip for SLG steps (default: [7,8,9])
+--slg-scale <float>                      skip layer guidance (SLG) scale, only for DiT models: (default: 0). 0 means disabled, a value of 2.5 is nice for sd3.5 medium
+--skip-layer-start <float>               SLG enabling point (default: 0.01)
+--skip-layer-end <float>                 SLG disabling point (default: 0.2)
+--high-noise-slg-scale <float>           (high noise) skip layer guidance (SLG) scale, only for DiT models: (default:0)
+--high-noise-skip-layer-start <float>    (high noise) SLG enabling point (default: 0.01)
+--high-noise-skip-layer-end <float>      (high noise) SLG disabling point (default: 0.2)
 
---ref-image-args 深入详解 
-1. 它的子参数包括哪些 key； 
-2. 各个子参数 key 详解（包括：作用、取值范围与默认值，适用场景等） 
-尽量以表格展示，通俗易懂
+--scm-mask                               SCM steps mask for cache-dit: comma-separated 0/1 (e.g.,"1,1,1,0,0,1,0,0,1,0") - 1=compute, 0=can cache
+--scm-policy                             SCM policy: 'dynamic' (default) or 'static'
 
---img‑cfg‑scale 深入详解（作用、取值范围与默认值，适用场景等）
+--cache-mode                             caching method: 'easycache' (DiT), 'ucache' (UNET),
+                                           'dbcache'/'taylorseer'/'cache-dit' (DiT block-level), 'spectrum' (UNET/DiT
+                                           Chebyshev+Taylor forecasting)
+--cache-option                           named cache params (key=value format, comma-separated). easycache/ucache:
+                                           threshold=,start=,end=,decay=,relative=,reset=; dbcache/taylorseer/cache-dit:
+                                           Fn=,Bn=,threshold=,warmup=; spectrum: w=,m=,lam=,window=,flex=,warmup=,stop=.
+                                           Examples: "threshold=0.25" or "threshold=1.5,reset=0"
 
-pad 填充后的补边区域，绘图过程会绘制，达到扩图的目的吗？
+--rng                                    RNG, one of [std_default, cuda, cpu], default: cuda(sd-webui), cpu(comfyui)
+--sampler-rng                            sampler RNG, one of [std_default, cuda, cpu]. If not specified, use --rng
+
+--upscale-model <string>                 path to esrgan model.
+--upscale-repeats <int>                  Run the ESRGAN upscaler this many times (default: 1)
+--upscale-tile-size <int>                tile size for ESRGAN upscaling (default: 128)
+
+--offload-to-cpu                         place the weights in RAM to save VRAM, and automatically load them into VRAM when needed
+--mmap                                   whether to memory-map model
+--flash-attn                             on|off|auto or module assignments (default: auto), e.g. auto,te=off,vae=on. Last repeated option wins
+--auto-fit                               on|off (default: on). Preserve --backend (otherwise select one GPU) and place weights on the compute GPU, RAM, another GPU, or disk in that order, according to available memory (--max-vram limits GPU budgets). Disabled by explicit --params-backend; uses automatic graph segmentation when needed
+--batched-cfg                            on|off (default: on). Run the conditional and unconditional CFG branches in one batched UNet forward when supported
+--type                                   weight type (examples: f32, f16, q4_0, q4_1, q5_0, q5_1, q8_0, q2_K, q3_K, q4_K). If not specified, the default is the type of the weight file
+--vae-tiling                             process vae encode and decode in spatial tiles to reduce memory usage(default: 256x256 image pixels)
+--backend <string>                       runtime backend assignment, e.g. cpu or clip=cpu,vae=cuda0,diffusion=vulkan0
+--params-backend <string>                parameter backend assignment, e.g. disk, cpu, or diffusion=disk,clip=cpu
